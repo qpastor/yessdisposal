@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Facebook, Instagram, Threads } from 'react-bootstrap-icons';
 
 const navLinks = [
   { label: 'Services', href: '#services' },
   { label: 'About', href: '#about' },
   { label: 'Projects', href: '#projects' },
   { label: 'Contact', href: '#contact' },
+  // { label: <Facebook />, href: 'https://www.facebook.com/profile.php?id=100041518574120'},
+  // { label: <Instagram />, href: 'https://www.instagram.com/isaacyess/'},
+  // { label: <Threads />, href: 'https://www.threads.com/@isaacyess?xmt=AQF04wdsAQ3JF-P01wkAGTzWXU2itSE-NYrXlDs32AQroLQ'}
+  // <a href="https://www.facebook.com/profile.php?id=100041518574120"><Facebook className="text-white"/></a>
+  //           <a href="https://www.instagram.com/isaacyess/"><Instagram className="text-white"/></a>
+  //           <a href="https://www.threads.com/@isaacyess?xmt=AQF04wdsAQ3JF-P01wkAGTzWXU2itSE-NYrXlDs32AQroLQ"><Threads className="text-white"/></a>
 ];
 
 export default function Navbar() {
@@ -53,8 +60,9 @@ export default function Navbar() {
                 Get a Quote
               </Button>
             </a>
-            facebook,
-            youtube
+            <a href="https://www.facebook.com/profile.php?id=100041518574120"><Facebook className="text-white"/></a>
+            <a href="https://www.instagram.com/isaacyess/"><Instagram className="text-white"/></a>
+            <a href="https://www.threads.com/@isaacyess?xmt=AQF04wdsAQ3JF-P01wkAGTzWXU2itSE-NYrXlDs32AQroLQ"><Threads className="text-white"/></a>
           </div>
 
           {/* Mobile menu button */}
@@ -64,6 +72,7 @@ export default function Navbar() {
           >
             {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
+            
         </div>
       </div>
 
@@ -87,7 +96,7 @@ export default function Navbar() {
                 Get a Quote
               </Button>
             </a>
-          </div>
+            </div>
         </div>
       )}
     </nav>
