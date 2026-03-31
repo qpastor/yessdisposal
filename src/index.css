@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-/* @import "tailwindcss"; */
-@tailwind base;
+@import "tailwindcss";
+/* @tailwind base;
 @tailwind components;
-@tailwind utilities;
+@tailwind utilities; */
 
 @layer base {
   :root {
@@ -77,6 +77,18 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+}
+
+@theme {
+  --color-border: hsl(var(--border));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-ring: hsl(var(--ring));
+  
+  /* Adding these so your UI components don't break later */
+  --color-primary: hsl(var(--primary));
+  --color-accent: hsl(var(--accent));
+  --color-muted: hsl(var(--muted));
 }
 
 @layer base {
