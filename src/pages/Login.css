@@ -1,0 +1,120 @@
+/* 1. Center the entire wrapper on the screen */
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #e9eff6; /* Soft blue background */
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* 2. The Card - Fixed width and centered */
+.container {
+    width: 350px; 
+    background: #fff;
+    padding: 35px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+/* 3. Header Styling */
+.logo-placeholder {
+    font-weight: 800;
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.title {
+    font-size: 20px;
+    color: #333;
+    margin: 10px 0 5px 0;
+}
+
+.subtitle {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 30px;
+}
+
+/* 4. Input Groups with Icons */
+.inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    border: 1px solid #d1d1d1;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+/* This adds the blue glow effect when you click the input */
+.input-group:focus-within {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.icon {
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-right: 1px solid #d1d1d1;
+    min-width: 45px;
+    display: flex;
+    justify-content: center;
+}
+
+.input-group input {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    color: #333;
+}
+
+/* 5. The Login Button */
+.submit-btn {
+    width: 100%;
+    padding: 14px;
+    margin-top: 25px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.submit-btn:hover {
+    background-color: #0056b3;
+}
+
+/* 6. Footer Links */
+.footer-links {
+    margin-top: 25px;
+    font-size: 14px;
+    color: #666;
+}
+
+.footer-links p {
+    margin: 0;
+}
+
+.footer-links a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
+} 
