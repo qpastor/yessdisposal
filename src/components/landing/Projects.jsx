@@ -1,6 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Building2, Users } from 'lucide-react';
+import Project1 from '@/assets/Project1.jpg';
+import Project2 from '@/assets/Project2.jpg';
+import Project3 from '@/assets/Project3.jpg';
+import Project4 from '@/assets/Project4.jpg';
+import Project5 from '@/assets/Project5.jpg';
+import Project6 from '@/assets/Project6.jpg';
+
 
 const projects = [
   {
@@ -9,7 +16,7 @@ const projects = [
     units: '500 Units',
     description: 'NYC OER Project No. 22TMP0662X, 22EHAZ138X — 270 truck loads of old foundation trucked away, 7019.2 ton of PA Regulated Dirt disposed with 217 trucks, Recycled Stone backfill & soil washing services.',
     contact: 'Beitel Group · Ami Weinstock · 718-612-6145',
-    image: 'https://media.base44.com/images/public/69b986f7419ad56e045285ee/f87835658_Project-1.jpg',
+    image: Project1,
   },
   {
     title: '399 Exterior Street',
@@ -17,7 +24,7 @@ const projects = [
     units: '2000 Units',
     description: 'Brownfield Site #C203139 — 270 truck loads of old foundation trucked away, 7019.2 ton of PA Regulated Dirt disposed with 217 trucks. All environmental monitoring under P.W. Grosser Consulting, Inc.',
     contact: 'Beitel Group · Ami Weinstock · 718-612-6145',
-    image: 'https://media.base44.com/images/public/69b986f7419ad56e045285ee/99b90eec5_Project-2.jpg',
+    image: Project2,
   },
   {
     title: '3880 9th Ave',
@@ -25,7 +32,7 @@ const projects = [
     units: '338 Units',
     description: 'Full soil excavation, transportation, and disposal services. All materials hauled under valid NYSDEC Part 364 waste transporter permits.',
     contact: 'On Target Construction · Simon Drummer · 718-938-5690',
-    image: 'https://media.base44.com/images/public/69b986f7419ad56e045285ee/976fc6b86_Project-3.jpg',
+    image: Project3,
   },
   {
     title: '620 W 153rd Street',
@@ -33,7 +40,7 @@ const projects = [
     units: '324 Units',
     description: 'Soil brokerage and compliant disposal services for a high-rise residential development. Every load tracked using Part 360 Series Waste Tracking Documents.',
     contact: 'The Jay Group · Tovia Khon · 917-624-0299',
-    image: 'https://media.base44.com/images/public/69b986f7419ad56e045285ee/3a95ca2e8_Project-4.jpg',
+    image: Project4,
   },
   {
     title: '2886 Atlantic Ave',
@@ -41,7 +48,7 @@ const projects = [
     units: '230 Units',
     description: 'Cost-effective soil disposal through Class B Recycling Centers and PADEP regulated facilities. Full OSHA and HAZMAT certified personnel on-site.',
     contact: 'The Jay Group · Joel Khon · 718-938-5690',
-    image: 'https://media.base44.com/images/public/69b986f7419ad56e045285ee/8c75a1754_Project-5.jpg',
+    image: Project5,
   },
   {
     title: '1499 Bedford Ave',
@@ -49,7 +56,7 @@ const projects = [
     units: '172 Units',
     description: 'Complete soil removal, transportation, and recycling services. Advanced contaminated soil washing converting materials into high-quality approved aggregate products.',
     contact: 'CW Realty Group · Adam · 347-533-0860',
-    image: 'https://media.base44.com/images/public/69b986f7419ad56e045285ee/d7ef084f8_Project-6.jpg',
+    image: Project6,
   },
 ];
 

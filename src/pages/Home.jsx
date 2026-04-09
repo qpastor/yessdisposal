@@ -6,20 +6,23 @@ import About from '../components/landing/About';
 import Projects from '../components/landing/Projects';
 import Contact from '../components/landing/Contact';
 import Footer from '../components/landing/Footer';
+import HeroBackground from '../assets/HeroBackGround.png';
+import TruckingImage from '../assets/TruckingImage.jpg';
+import BrokerageImage from '../assets/BrokageImage.png';
+import DisposalImage from '../assets/DisposalImage.png';
+import Project1Image from '../assets/Project1.png';
+import Project2Image from '../assets/Project2.png';
+import Project3Image from '../assets/Project3.png';
 
 const IMAGES = {
-  hero: 'https://media.base44.com/images/public/69b986f7419ad56e045285ee/0b8193d9b_generated_47e2d3d7.png',
+  hero: HeroBackground,
   services: {
-    trucking: 'https://media.base44.com/images/public/69b986f7419ad56e045285ee/540fc5080_Triaxle-Dump-Truck.jpg',
-    brokerage: 'https://media.base44.com/images/public/69b986f7419ad56e045285ee/475e70d4a_generated_a3af5bb1.png',
-    disposal: 'https://media.base44.com/images/public/69b986f7419ad56e045285ee/3b68e2325_generated_944b5684.png',
+    trucking: TruckingImage,
+    brokerage: BrokerageImage,
+    disposal: DisposalImage,
   },
-  projects: [
-    'https://media.base44.com/images/public/69b986f7419ad56e045285ee/3efd4e3a5_generated_5aa6b374.png',
-    'https://media.base44.com/images/public/69b986f7419ad56e045285ee/48052e603_generated_14965cd5.png',
-    'https://media.base44.com/images/public/69b986f7419ad56e045285ee/11ac7dc61_generated_0e3bf0ac.png',
-  ],
-};
+  projects: [Project1Image, Project2Image, Project3Image],
+}
 
 export default function Home() {
   return (

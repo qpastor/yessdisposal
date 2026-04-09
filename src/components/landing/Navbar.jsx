@@ -2,18 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Facebook, Instagram, Threads } from 'react-bootstrap-icons';
+import Logo from '@/assets/YessLogo.png';
 
 const navLinks = [
   { label: 'Services', href: '#services' },
   { label: 'About', href: '#about' },
   { label: 'Projects', href: '#projects' },
-  { label: 'Contact', href: '#contact' },
-  // { label: <Facebook />, href: 'https://www.facebook.com/profile.php?id=100041518574120'},
-  // { label: <Instagram />, href: 'https://www.instagram.com/isaacyess/'},
-  // { label: <Threads />, href: 'https://www.threads.com/@isaacyess?xmt=AQF04wdsAQ3JF-P01wkAGTzWXU2itSE-NYrXlDs32AQroLQ'}
-  // <a href="https://www.facebook.com/profile.php?id=100041518574120"><Facebook className="text-white"/></a>
-  //           <a href="https://www.instagram.com/isaacyess/"><Instagram className="text-white"/></a>
-  //           <a href="https://www.threads.com/@isaacyess?xmt=AQF04wdsAQ3JF-P01wkAGTzWXU2itSE-NYrXlDs32AQroLQ"><Threads className="text-white"/></a>
+  { label: 'Contact', href: '#contact' }
 ];
 
 export default function Navbar() {
@@ -34,11 +29,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-28">
           {/* Logo */}
           <a href="#" className="flex items-center">
-            <img
-              src="https://media.base44.com/images/public/69b986f7419ad56e045285ee/4aa9959fc_Yess-BlackWhite-Logo.png"
-              alt="YESS Trucking & Disposal"
-              className="h-12 w-auto object-contain"
-
+            <img src={Logo} alt="Yess Logo" className="h-12 w-auto object-contain" 
             />
           </a>
 
