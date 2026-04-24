@@ -1,0 +1,228 @@
+/* Sidebar.module.css */
+
+.sidebar {
+  /* height: 100vh; Changed to vh to ensure it fills the screen height */
+  /* width: 250px; */
+  /* background-color: #2f4050; */
+  /* display: flex;           */
+  /* flex-direction: column;  */
+
+  height: 100vh;
+  width: 250px; /* Desktop Width */
+  position: fixed; /* Keep it fixed on the left */
+  left: 0;
+  top: 0;
+  background-color: #2f4050;
+  z-index: 1000;
+}
+
+.sidebarList {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+.logoContainer {
+  width: 100%;
+  display: flex;
+  justify-content: center; /* Centers horizontally */
+  align-items: center;     /* Centers vertically */
+  padding: 20px 0;         /* Adds space above and below the logo */
+}
+
+.logo {
+  /* Set width relative to the sidebar (250px) */
+  width: 180px;            
+  height: auto;            /* Maintains original aspect ratio */
+  
+  /* Alternative: Use max-width to ensure it never overflows */
+  /* max-width: 80%; */
+}
+
+.row {
+  width: 100%;
+  height: 60px; /* Slightly taller for better look */
+  display: flex;
+  flex-direction: row; /* Aligns items horizontally */
+  color: white;
+  align-items: center; /* Vertically centers icon and text */
+  cursor: pointer;
+  border-bottom: 1px solid #3d4e5d; /* Border only at the bottom */
+  font-family: 'Trebuchet MS', sans-serif;
+  transition: 0.2s;
+}
+
+.row:hover {
+  background-color: #3d4e5d;
+}
+
+.icon {
+  flex: 30%; /* Takes up 30% of the row */
+  display: grid;
+  place-items: center;
+}
+
+/* --- New Sub-menu Styles --- */
+
+.subList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background-color: #263544; /* Darker than the main sidebar for depth */
+}
+
+.subRow {
+  width: 100%;
+  height: 50px; /* Slightly shorter than main rows */
+  display: flex;
+  align-items: center;
+  color: #aeb2b7; /* Dimmer text for sub-items */
+  cursor: pointer;
+  padding-left: 60px; /* Indent so it aligns under the title, not the icon */
+  font-family: 'Trebuchet MS', sans-serif;
+  font-size: 14px;
+  transition: 0.2s;
+  border-bottom: 1px solid #344453;
+}
+
+.subRow:hover {
+  background-color: #3d4e5d;
+  color: white;
+}
+
+/* Arrow container for the parent row */
+.arrow {
+  flex: 10%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-right: 15px;
+  color: #858796;
+}
+
+/* Adjustment to existing .title to make room for arrow */
+.title {
+  flex: 70%; /* Takes up the rest of the row */
+  display: flex;
+  align-items: center;
+}
+
+.sidebarFooter {
+  margin-top: auto;       /* Pushes the footer to the very bottom */
+  padding: 15px;
+  background-color: #263544; /* Slightly darker background */
+  border-top: 1px solid #3d4e5d;
+}
+
+.footerLabel {
+  font-size: 11px;
+  color: #858796;
+}
+
+.footerUser {
+  font-size: 14px;
+  color: white;
+}
+
+/* --- AUTOMATIC LEFT-SIDE MOBILE VIEW --- */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 60px; /* Mobile Width (Icon only) */
+  }
+  
+  /* These hide the text to keep it slim as requested */
+  .title, .logoContainer, .sidebarFooter, .arrow, .subList {
+    display: none !important;
+  }
+
+  /* Hide the text labels, logo, and footer info to save space */
+  .title, 
+  .footerLabel, 
+  .footerUser, 
+  .arrow,
+  .logoContainer {
+    display: none !important;
+  }
+
+  .row {
+    height: 60px;
+    justify-content: center; /* Center the icon in the slim bar */
+    padding: 0;
+    border-bottom: 1px solid #3d4e5d;
+  }
+
+  .icon {
+    flex: none; 
+    width: 100%;
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+  }
+
+  .sidebarFooter {
+    padding: 10px 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* IMPORTANT: Push your main content to the right so the sidebar doesn't overlap cards */
+  /* You may need to apply this class to your main wrapper component */
+  :global(.main-content) {
+    margin-left: 60px !important;
+    width: calc(100% - 60px);
+  }
+}/* Sidebar.module.css */
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 60px; /* Base width (Icons only) */
+    z-index: 1000;
+    transition: width 0.3s ease-in-out; /* Smooth expansion animation */
+    overflow-x: hidden; /* Prevents text from leaking out during animation */
+  }
+
+  /* --- EXPANSION TRIGGER --- */
+  /* This triggers when a mobile user touches and holds the sidebar */
+  .sidebar:hover,
+  .sidebar:active {
+    width: 250px; 
+    box-shadow: 5px 0px 15px rgba(0,0,0,0.3); /* Adds depth when expanded */
+  }
+
+  /* Hide elements by default on mobile */
+  .title, 
+  .footerLabel, 
+  .footerUser, 
+  .arrow,
+  .logoContainer {
+    opacity: 0;
+    display: none;
+    transition: opacity 0.2s;
+  }
+
+  /* --- SHOW ELEMENTS ON EXPAND --- */
+  .sidebar:hover .title, .sidebar:active .title,
+  .sidebar:hover .footerLabel, .sidebar:active .footerLabel,
+  .sidebar:hover .footerUser, .sidebar:active .footerUser,
+  .sidebar:hover .arrow, .sidebar:active .arrow,
+  .sidebar:hover .logoContainer, .sidebar:active .logoContainer {
+    display: flex !important;
+    opacity: 1;
+  }
+
+  .row {
+    justify-content: flex-start; /* Align to left when expanded */
+    padding-left: 18px; /* Align icon properly */
+    width: 250px; /* Match expanded width */
+  }
+
+  .icon {
+    flex: none;
+    width: 24px;
+    margin-right: 20px; /* Gap between icon and text when expanded */
+  }
+}

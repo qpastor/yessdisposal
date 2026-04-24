@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Facebook, Instagram, Threads } from 'react-bootstrap-icons';
-import Logo from '@/assets/YessLogo.png';
+import Logo from '@/assets/img/YessLogo.png';
 
 const navLinks = [
   { label: 'Services', href: '#services' },
   { label: 'About', href: '#about' },
   { label: 'Projects', href: '#projects' },
-  { label: 'Contact', href: '#contact' }
+  { label: 'Contact', href: '#contact' },
 ];
 
 export default function Navbar() {
@@ -29,7 +29,11 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-28">
           {/* Logo */}
           <a href="#" className="flex items-center">
-            <img src={Logo} alt="Yess Logo" className="h-12 w-auto object-contain" 
+            <img
+              src={Logo}
+              alt="YESS Trucking & Disposalsssssss"
+              className="h-12 w-auto object-contain"
+
             />
           </a>
 

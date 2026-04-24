@@ -8,17 +8,43 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 
 export default function Contact() {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
+  const [form, setForm] = useState({ fullname: '', email: '', phone: '', project_details: '' });
   const [sending, setSending] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSending(true);
-    // Simulate send
-    await new Promise((r) => setTimeout(r, 1000));
-    toast.success('Message sent! We\'ll get back to you shortly.');
-    setForm({ name: '', email: '', phone: '', message: '' });
+
+  try {
+    const response = await fetch('http://localhost:5001/api/auth/request-sent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // Ensure these keys match what your backend expects
+      body: JSON.stringify({
+        fullname: form.fullname, // Mapping 'name' from state to 'fullname' for DB
+        email: form.email,
+        phone: form.phone,
+        project_details: form.project_details, // Mapping 'message' to 'project_details'
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      toast.success("Message sent! We'll get back to you shortly.");
+      // Reset form to initial state
+      setForm({ fullname: '', email: '', phone: '', project_details: '' });
+    } else {
+      toast.error(data.error || 'Something went wrong. Please try again.');
+    }
+  } catch (err) {
+    console.error('Submission Error:', err);
+    toast.error('Could not connect to the server.');
+  } finally {
     setSending(false);
+  }
   };
 
   const contactInfo = [
@@ -78,9 +104,9 @@ export default function Contact() {
                 <div>
                   <Label htmlFor="name" className="text-sm font-medium text-foreground">Full Name</Label>
                   <Input
-                    id="name"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    id="fullname"
+                    value={form.fullname}
+                    onChange={(e) => setForm({ ...form, fullname: e.target.value })}
                     placeholder="John Smith"
                     className="mt-1.5"
                     required
@@ -112,11 +138,11 @@ export default function Contact() {
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="message" className="text-sm font-medium text-foreground">Project Details</Label>
+                  <Label htmlFor="project_details" className="text-sm font-medium text-foreground">Project Details</Label>
                   <Textarea
-                    id="message"
-                    value={form.message}
-                    onChange={(e) => setForm({ ...form, message: e.target.value })}
+                    id="project_details"
+                    value={form.project_details}
+                    onChange={(e) => setForm({ ...form, project_details: e.target.value })}
                     placeholder="Tell us about your project, timeline, and estimated volume..."
                     className="mt-1.5 min-h-[140px]"
                     required

@@ -1,12 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Building2, Users } from 'lucide-react';
-import Project1 from '@/assets/Project1.jpg';
-import Project2 from '@/assets/Project2.jpg';
-import Project3 from '@/assets/Project3.jpg';
-import Project4 from '@/assets/Project4.jpg';
-import Project5 from '@/assets/Project5.jpg';
-import Project6 from '@/assets/Project6.jpg';
+import Project1 from '@/assets/img/Project1.jpg';
+import Project2 from '@/assets/img/Project2.jpg';
+import Project3 from '@/assets/img/Project3.jpg';
+import Project4 from '@/assets/img/Project4.jpg';
+import Project5 from '@/assets/img/Project5.jpg';
+import Project6 from '@/assets/img/Project6.jpg';
 
 
 const projects = [
