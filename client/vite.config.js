@@ -9,7 +9,7 @@ export default defineConfig({
   },
   build: {
     // This tells Vite to put the build files one level up from the client folder
-    outDir: '../dist', 
+    outDir: 'dist', 
     emptyOutDir: true, // This ensures the old files are cleared out first
   },
   preview: {
