@@ -1,33 +1,39 @@
-Project Title: Data Management Web App + Mobile app
+**Welcome to your Base44 project** 
 
-📖 Overview
+**About**
 
-This application streamlines the process of tracking physical assets and coordinating field technician schedules. 
-It replaces manual spreadsheets with a synchronized digital dashboard, ensuring data integrity and faster response times
+View and Edit  your app on [Base44.com](http://Base44.com) 
 
+This project contains everything you need to run your app locally.
 
-🛠Tech Stack
-Frontend: React / Next.js (App Router)
-Styling: Tailwind CSS
-Backend: Node.js / Next.js API Routes
-Database & ORM: PostgreSQL with Prisma
-Hosting: Render
+**Edit the code in your local development environment**
 
-🚀 Quick Start
+Any change pushed to the repo will also be reflected in the Base44 Builder.
 
-Prerequisites
+**Prerequisites:** 
 
-1. Node.js (v18 or higher)
+1. Clone the repository using the project's Git URL 
+2. Navigate to the project directory
+3. Install dependencies: `npm install`
+4. Create an `.env.local` file and set the right environment variables
 
-2. npm or yarn
+```
+VITE_BASE44_APP_ID=your_app_id
+VITE_BASE44_APP_BASE_URL=your_backend_url
 
-3. A running PostgreSQL instance
+e.g.
+VITE_BASE44_APP_ID=cbef744a8545c389ef439ea6
+VITE_BASE44_APP_BASE_URL=https://my-to-do-list-81bfaad7.base44.app
+```
 
+Run the app: `npm run dev`
 
-Key Features
+**Publish your changes**
 
-1. Real-time Dashboard
-2. Client Management
-3. Task Management
-4. Invoice Management
-5. User Management
+Open [Base44.com](http://Base44.com) and click on Publish.
+
+**Docs & Support**
+
+Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
+
+Support: [https://app.base44.com/support](https://app.base44.com/support)

@@ -1,31 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LogoImg from "../assets/img/YessLogo.png";
+import instance from '../api';
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     const loginData = { username, password };
+    
     try {
-      const response = await fetch('http://localhost:5001/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loginData),
-        credentials: 'include',
-      });
+      const response = await instance.post('/api/auth/login', loginData);
+      onLogin(response.data.user);
+      navigate('/dashboard'); 
 
-      const data = await response.json();
-      if (response.ok) {
-        onLogin(data.user);
-        navigate('/dashboard'); 
-      } else {
-        alert(data.message || "Login failed");
-      }
     } catch (error) {
+      const errorMessage = error.response?.data?.message || "Login failed";
+      alert(errorMessage);
       console.error("Error connecting to server:", error);
     }
   };

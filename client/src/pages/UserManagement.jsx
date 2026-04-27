@@ -6,6 +6,7 @@ import {
   ChevronRight, ChevronsLeft, ChevronsRight, Filter 
 } from 'lucide-react';
 import Sidebar from "../components/navigation/Sidebar"; 
+import instance from '../api'; // Import the configured Axios instance
 
 export default function UserTable({ user }) {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ export default function UserTable({ user }) {
       try {
         setLoading(true);
         // Updated endpoint to fetch users instead of tasks
-        const response = await axios.get('http://localhost:5001/api/auth/users');
+        const response = await instance.get('/api/auth/users');
         setUsers(response.data); 
       } catch (err) {
         setError("Failed to fetch users");
@@ -38,7 +39,7 @@ export default function UserTable({ user }) {
   const deleteUser = async (id) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
-        await axios.delete(`http://localhost:5001/api/auth/users/${id}`);
+        await instance.delete(`/api/auth/users/${id}`);
         // Filter out the deleted user from state
         setUsers(users.filter((u) => u.userid !== id));
         alert("User deleted successfully");

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Save, XCircle } from 'lucide-react';
-import axios from 'axios';
 import Sidebar from "../components/navigation/Sidebar";
 import { useNavigate } from 'react-router-dom';
+import instance from '../api'; // Import the configured Axios instance
 
 const UserRegistrationForm = ({ user }) => {
   const [formData, setFormData] = useState({
@@ -20,7 +20,7 @@ const UserRegistrationForm = ({ user }) => {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/auth/roles');
+        const response = await instance.get('/api/auth/roles');
         setRoles(response.data);
       } catch (err) {
         console.error("Error fetching roles:", err);
@@ -33,28 +33,43 @@ const UserRegistrationForm = ({ user }) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5001/api/auth/user-register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(formData),
-      });
+      const response = await instance.post('/api/auth/user-register', formData);
 
-      const data = await response.json();
-      if (response.ok) {
+      if (response.status === 200 || response.status === 201) {
         alert('User registered successfully!');
         navigate('/user-management');
-      } else {
-        alert(`Error: ${data.error || 'Failed to register user'}`);
       }
     } catch (err) {
-      alert('Could not connect to the server.');
+
+      const errorMessage = err.response?.data?.error || 'Failed to register user';
+      alert(`Error: ${errorMessage}`);
+      console.error("Registration error:", err);
     }
   };
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   try {
+  //     const response = await fetch('http://localhost:5001/api/auth/user-register', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       credentials: 'include',
+  //       body: JSON.stringify(formData),
+  //     });
+
+  //     const data = await response.json();
+  //     if (response.ok) {
+  //       alert('User registered successfully!');
+  //       navigate('/user-management');
+  //     } else {
+  //       alert(`Error: ${data.error || 'Failed to register user'}`);
+  //     }
+  //   } catch (err) {
+  //     alert('Could not connect to the server.');
+  //   }
+  // };
 
   const handleClear = () => {
     setFormData({ name: '', username: '', password: '', email: '', isactive: true, role_id: '' });

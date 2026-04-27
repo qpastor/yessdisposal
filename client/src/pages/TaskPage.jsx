@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Settings, X, Save, Briefcase } from 'lucide-react';
 import Sidebar from "../components/navigation/Sidebar";
+import instance from '../api'; // Import the configured Axios instance
 
 const FormRow = ({ label, children }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center py-4">
@@ -38,7 +39,7 @@ const TaskPage = ({ user }) => {
   useEffect(() => {
     const fetchStatuses = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/auth/statuses');
+        const response = await instance.get('/api/auth/statuses');
         setStatuses(response.data);
       } catch (err) {
         console.error("Error fetching statuses:", err);
@@ -50,7 +51,7 @@ const TaskPage = ({ user }) => {
   useEffect(() => {
     const fetchTaskDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:5001/api/auth/tasks/${id}`);
+        const response = await instance.get(`/api/auth/tasks/${id}`);
         const task = response.data;
         setFormData({
           ...task,
@@ -83,7 +84,7 @@ const TaskPage = ({ user }) => {
     if (e) e.preventDefault();
     setIsSubmitting(true);
     try {
-      const response = await axios.put(`http://localhost:5001/api/auth/tasks/${id}`, formData);
+      const response = await instance.put(`/api/auth/tasks/${id}`, formData);
       const updated = response.data;
       setFormData({
         ...updated,

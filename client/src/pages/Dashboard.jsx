@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import Sidebar from "../components/navigation/Sidebar";
+import instance from '../api';
 
 // --- 2. HELPER ---
 const getCardConfig = (statusName) => {
@@ -48,7 +48,7 @@ const Dashboard = ({ user }) => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get('http://localhost:5001/api/auth/stats');
+        const res = await instance.get('/api/auth/stats');
         setStats(res.data);
       } catch (err) {
         console.error("Error fetching stats:", err);

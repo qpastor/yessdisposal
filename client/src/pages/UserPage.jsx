@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Settings, X, Save, User as UserIcon } from 'lucide-react';
 import Sidebar from "../components/navigation/Sidebar";
+import instance from '../api'; // Import the configured Axios instance
 
 const FormRow = ({ label, children, required }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center py-4">
@@ -36,7 +37,7 @@ const UserPage = ({ user }) => {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/auth/roles');
+        const response = await instance.get('/api/auth/roles');
         setRoles(response.data);
       } catch (err) {
         console.error("Error fetching roles:", err);
@@ -48,7 +49,7 @@ const UserPage = ({ user }) => {
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:5001/api/auth/users/${id}`);
+        const response = await instance.get(`/api/auth/users/${id}`);
         const data = response.data;
         setFormData({
           ...data,
@@ -80,7 +81,7 @@ const UserPage = ({ user }) => {
     if (e) e.preventDefault();
     setIsSubmitting(true);
     try {
-      await axios.put(`http://localhost:5001/api/auth/users/${id}`, formData, { withCredentials: true });
+      await instance.put(`/api/auth/users/${id}`, formData);
       alert("User updated successfully!");
     } catch (err) {
       alert("Failed to update user.");

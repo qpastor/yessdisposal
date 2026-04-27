@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios'; // Make sure to run 'npm install axios'
-import { 
-  Search, UserPlus, Download, ChevronDown, Pencil, Trash2, ChevronLeft, 
-  ChevronRight, ChevronsLeft, ChevronsRight, Filter 
-} from 'lucide-react';
+import { Search, UserPlus, Pencil, Trash2 } from 'lucide-react';
 import Sidebar from "../components/navigation/Sidebar"; 
-
+import instance from '../api'; // Import the configured Axios instance
 
 
 export default function UserTable({ user }) {
@@ -21,7 +18,7 @@ export default function UserTable({ user }) {
       try {
         setLoading(true);
         // Replace with your actual API endpoint (e.g., http://localhost:5000/api/tasks)
-        const response = await axios.get('http://localhost:5001/api/auth/tasks');
+        const response = await instance.get('/api/auth/tasks');
         setTasks(response.data); 
       } catch (err) {
         setError("Failed to fetch tasks");
@@ -38,7 +35,7 @@ export default function UserTable({ user }) {
   if (window.confirm("Are you sure you want to delete this task?")) {
     try {
       // Call backend to delete from Database
-      await axios.delete(`http://localhost:5001/api/auth/tasks/${id}`);
+      await instance.delete(`/api/auth/tasks/${id}`);
 
       // Update UI state to remove the deleted task
       setTasks(tasks.filter((task) => task.task_id !== id));
@@ -53,7 +50,7 @@ export default function UserTable({ user }) {
 
 const viewTask = async (id) => {
   try {
-    const response = await axios.get(`http://localhost:5001/api/auth/tasks/${id}`);
+    const response = await instance.get(`/api/auth/tasks/${id}`);
     console.log("Task details:", response.data);
     navigate(`/task-details/${id}`, { state: { task: response.data } });
   } catch (err) {

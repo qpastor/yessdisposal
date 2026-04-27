@@ -3,6 +3,7 @@ import { Save, XCircle } from 'lucide-react';
 import axios from 'axios';
 import Sidebar from "../components/navigation/Sidebar";
 import { useNavigate } from 'react-router-dom';
+import instance from '../api'; // Import the configured Axios instance
 
 const TaskRegistrationForm = ({ user }) => {
   const isAdmin = user?.role_name === 'Admin';
@@ -23,7 +24,7 @@ const TaskRegistrationForm = ({ user }) => {
   useEffect(() => {
     const fetchStatuses = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/auth/statuses');
+        const response = await instance.get('/api/auth/statuses');
         setStatuses(response.data);
         if (response.data.length > 0 && !formData.status_id) {
           setFormData(prev => ({ ...prev, status_id: response.data[0].status_id }));
