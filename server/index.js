@@ -12,7 +12,9 @@ app.use(express.json());
 
 const allowedOrigins = [
     'http://localhost:5173', 
-    'https://yess-disposal-client.onrender.com'
+    'https://yess-disposal-client.onrender.com',
+    'https://www.yessdisposal.com', // ADD THIS LINE
+    'https://yessdisposal.com'      // AND THIS ONE (without the www)
 ];
 
 // app.use(cors({
