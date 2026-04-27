@@ -6,13 +6,15 @@ import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const cookieOptions = {
     httpOnly: true,
-    secure: false, // Must stay false
-    sameSite: 'lax', 
+    secure: isProduction, // Set to true in production
+    sameSite: isProduction ? 'none' : 'lax', 
     maxAge: 24 * 60 * 60 * 1000,
     path: '/',
-    domain: 'localhost' // Adding this explicitly can help Chrome map it
+    domain: isProduction ? '.yessdisposal.com' : 'localhost'
 };
 
 const generateToken = (id) => {
@@ -206,15 +208,22 @@ router.post('/login', async (req, res) => {
 // Logout Route
 router.post('/logout', (req, res) => {
     res.cookie('yess_session', '', {
-        httpOnly: true,
-        expires: new Date(0), // Sets the expiration date to the past
-        secure: false,
-        //process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/'
+        ...cookieOptions,
+        expires: new Date(0), 
     });
     res.status(200).json({ message: "Logged out successfully" });
 });
+// router.post('/logout', (req, res) => {
+//     res.cookie('yess_session', '', {
+//         httpOnly: true,
+//         expires: new Date(0), // Sets the expiration date to the past
+//         secure: false,
+//         //process.env.NODE_ENV === 'production',
+//         sameSite: 'lax',
+//         path: '/'
+//     });
+//     res.status(200).json({ message: "Logged out successfully" });
+// });
 
 // Task Registration
 router.post('/task-register', protect, adminOnly, async (req, res) => {
