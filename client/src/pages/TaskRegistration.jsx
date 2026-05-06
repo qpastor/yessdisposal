@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Save, XCircle } from 'lucide-react';
-import axios from 'axios';
-import Sidebar from "../components/navigation/Sidebar";
+import { Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import instance from '../api'; // Import the configured Axios instance
+import instance from '../api';
 
-const TaskRegistrationForm = ({ user }) => {
+  const TaskRegistrationForm = ({ user }) => {
   const isAdmin = user?.role_name === 'Admin';
   const navigate = useNavigate();
   const [statuses, setStatuses] = useState([]);
@@ -69,11 +67,7 @@ const TaskRegistrationForm = ({ user }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 overflow-hidden">
-      <Sidebar user={user} />
-
-      {/* Responsive margin added here */}
-      <main className="flex-1 ml-[250px] max-md:ml-[60px] transition-all duration-300 overflow-y-auto">
+    <>
         <header className="bg-white p-6 shadow-sm border-b border-gray-200">
           <h2 className="text-2xl font-semibold text-[#1e293b]">Task Registration</h2>
         </header>
@@ -151,8 +145,7 @@ const TaskRegistrationForm = ({ user }) => {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </>
   );
 };
 

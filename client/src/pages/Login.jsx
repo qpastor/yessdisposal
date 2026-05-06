@@ -6,10 +6,12 @@ import instance from '../api';
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
 const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     const loginData = { username, password };
     
     try {
@@ -18,8 +20,8 @@ const handleSubmit = async (e) => {
       navigate('/dashboard'); 
 
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Login failed";
-      alert(errorMessage);
+      const errorMessage = error.response?.data?.message || "Incorrect username or password.";
+      setError(errorMessage);
       console.error("Error connecting to server:", error);
     }
   };
@@ -63,6 +65,12 @@ const handleSubmit = async (e) => {
               />
             </div>
           </div>
+
+          {error && (
+            <div className="mt-4 p-2.5 bg-red-500/10 border border-red-500/50 rounded-md text-red-400 text-xs text-center font-medium animate-pulse">
+              ⚠️ {error}
+            </div>
+          )}
 
           {/* Login Button - Kept the yellow from image 1 but optimized for dark theme */}
           <button className="w-full mt-6 bg-[#f1c40f] text-[#2c3e50] py-3 rounded-md font-bold hover:bg-[#f39c12] transition-colors">

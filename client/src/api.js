@@ -1,8 +1,13 @@
 import axios from 'axios';
 
+// Detect the API URL based on the environment
+const API_BASE_URL = import.meta.env.MODE === 'production'
+  ? 'https://yess-disposal-api.onrender.com'
+  : 'http://localhost:5001';
+
 const instance = axios.create({
   // If the environment variable fails, it falls back to localhost
-  baseURL: import.meta.env.VITE_API_URL|| 'https://yess-disposal-api.onrender.com',
+  baseURL: API_BASE_URL,
   withCredentials: true,
 });
 

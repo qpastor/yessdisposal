@@ -62,13 +62,6 @@ export default function UserTable({ user }) {
   if (error) return <div className="p-10 text-center text-red-500">{error}</div>;
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden antialiased">
-      {/* 1. Sidebar remains fixed */}
-      <Sidebar user={user}/>
-      
-      {/* 2. Main Content Wrapper with responsive margins to avoid sidebar overlap */}
-      <div className="flex-1 flex flex-col overflow-y-auto p-4 md:p-6 ml-[250px] max-md:ml-[60px] transition-all duration-300">
-        
         <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
           
           {/* --- Toolbar --- */}
@@ -177,9 +170,6 @@ export default function UserTable({ user }) {
               <button className="p-2 hover:bg-gray-100 rounded disabled:opacity-30" disabled><ChevronsRight className="w-4 h-4" /></button>
             </div>
           </div>
-
         </div>
-      </div>
-    </div>
   );
 }

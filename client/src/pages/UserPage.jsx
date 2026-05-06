@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { Settings, X, Save, User as UserIcon } from 'lucide-react';
-import Sidebar from "../components/navigation/Sidebar";
-import instance from '../api'; // Import the configured Axios instance
+import instance from '../api';
 
 const FormRow = ({ label, children, required }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center py-4">
@@ -18,11 +16,13 @@ const FormRow = ({ label, children, required }) => (
 
 const UserPage = ({ user }) => {
   const isAdmin = user?.role_name === 'Admin';
+  const isReadOnly = user?.role_name === 'View Only';
   const { id } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState([]);
+  const [notification, setNotification] = useState(null);
   const [formData, setFormData] = useState({
     userid: '',
     name: '',
@@ -31,8 +31,6 @@ const UserPage = ({ user }) => {
     isactive: false,
     role_id: ''
   });
-
-  const isReadOnly = user?.role_name === 'View Only';
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -45,6 +43,18 @@ const UserPage = ({ user }) => {
     };
     fetchRoles();
   }, []);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000); // 5000ms = 5 seconds
+
+      // Cleanup function to clear timer if component unmounts 
+      // or if notification changes before timer finishes
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -79,10 +89,11 @@ const UserPage = ({ user }) => {
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
+    setNotification(null);
     setIsSubmitting(true);
     try {
       await instance.put(`/api/auth/users/${id}`, formData);
-      alert("User updated successfully!");
+      setNotification({ type: 'success', message: "User updated successfully!" });
     } catch (err) {
       alert("Failed to update user.");
     } finally {
@@ -93,15 +104,16 @@ const UserPage = ({ user }) => {
   if (loading) return <div className="p-10 text-center">Loading User details...</div>;
 
   return (
-    <div className="flex min-h-screen bg-slate-50 overflow-hidden">
-      <Sidebar user={user} />
-      
-      <main className="flex-1 ml-[250px] max-md:ml-[60px] transition-all duration-300 overflow-y-auto">
+    <>
         <header className="bg-white p-6 shadow-sm border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-2xl font-semibold text-[#1e293b]">Edit User</h2>
           <Settings size={20} className="text-slate-400" />
         </header>
-
+          {notification && (
+            <div className={`mt-4 p-2.5 rounded-md text-xs text-center font-medium animate-pulse ${notification.type === 'success' ? 'bg-green-500/10 border border-green-500/50 text-green-400' : 'bg-red-500/10 border border-red-500/50 text-red-400'}`}>
+              {notification.message}
+            </div>
+          )}
         <div className="w-full max-w-4xl mx-auto p-4 md:p-8">
           <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
             <div className="bg-[#2D3E50] px-8 py-4 flex items-center gap-3 text-white">
@@ -157,9 +169,8 @@ const UserPage = ({ user }) => {
             </form>
           </div>
         </div>
-      </main>
-    </div>
-  );
-};
+</> // <--- Add Fragment end
+  ); // <--- Close return parenthesis
+}; // <--- Close component function
 
 export default UserPage;

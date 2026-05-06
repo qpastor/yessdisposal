@@ -58,9 +58,11 @@ const Dashboard = ({ user }) => {
   }, []);
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden antialiased">
-      <Sidebar user={user}/>
-      <main className="flex-1 p-10 overflow-y-auto ml-[250px] max-md:ml-[60px] transition-all duration-300">
+    <div className="p-10 antialiased">
+      {/* Page Header (Optional but recommended for consistency) */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-slate-800">Dashboard Overview</h1>
+      </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl">
           {stats.map((stat, index) => {
             const config = getCardConfig(stat.status_name);
@@ -76,8 +78,7 @@ const Dashboard = ({ user }) => {
             );
           })}
         </div>
-      </main>
-    </div>
+        </div>
   );
 };
 

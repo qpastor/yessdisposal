@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; // Make sure to run 'npm install axios'
 import { Search, UserPlus, Pencil, Trash2 } from 'lucide-react';
 import Sidebar from "../components/navigation/Sidebar"; 
 import instance from '../api'; // Import the configured Axios instance
@@ -69,11 +68,7 @@ const viewTask = async (id) => {
   if (error) return <div className="p-10 text-center text-red-500">{error}</div>;
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar user={user}/>
-      
-      <div className="flex-1 flex flex-col overflow-y-auto p-6 ml-[250px] max-md:ml-[60px] transition-all duration-300">
-        <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
         {/* --- Toolbar (Same as your code) --- */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-2 flex-1 min-w-[300px]">
@@ -159,7 +154,5 @@ const viewTask = async (id) => {
           </table>
         </div>
       </div>
-    </div>
-    </div>
   );
   }

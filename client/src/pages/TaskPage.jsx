@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { Settings, X, Save, Briefcase } from 'lucide-react';
 import Sidebar from "../components/navigation/Sidebar";
 import instance from '../api'; // Import the configured Axios instance
@@ -18,6 +17,7 @@ const TaskPage = ({ user }) => {
   const { id } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const [notification, setNotification] = useState(null);
   const [statuses, setStatuses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -35,6 +35,18 @@ const TaskPage = ({ user }) => {
 
   const isReadOnly = user?.role_name === 'View Only';
   const formatDate = (dateString) => dateString ? dateString.split('T')[0] : '';
+
+  useEffect(() => {
+      if (notification) {
+        const timer = setTimeout(() => {
+          setNotification(null);
+        }, 5000); // 5000ms = 5 seconds
+  
+        // Cleanup function to clear timer if component unmounts 
+        // or if notification changes before timer finishes
+        return () => clearTimeout(timer);
+      }
+  }, [notification]);
 
   useEffect(() => {
     const fetchStatuses = async () => {
@@ -91,9 +103,9 @@ const TaskPage = ({ user }) => {
         schedule_date: formatDate(updated.schedule_date),
         completed_date: formatDate(updated.completed_date),
       });
-      alert("Task updated successfully!");
+      setNotification({ type: 'success', message: "Task was successfully updated!" });
     } catch (err) {
-      alert("Failed to update task.");
+      setNotification({ type: 'error', message: "Failed to update task." });
     } finally {
       setIsSubmitting(false);
     }
@@ -102,10 +114,7 @@ const TaskPage = ({ user }) => {
   if (loading) return <div className="p-10 text-center">Loading task details...</div>;
 
   return (
-    <div className="flex min-h-screen bg-slate-50 overflow-hidden">
-      <Sidebar user={user} />
-      
-      <main className="flex-1 ml-[250px] max-md:ml-[60px] transition-all duration-300 overflow-y-auto">
+    <>
         <header className="bg-white p-6 shadow-sm border-b border-gray-200">
           <h2 className="text-2xl font-semibold text-[#1e293b]">Job Details</h2>
         </header>
@@ -156,7 +165,12 @@ const TaskPage = ({ user }) => {
                   <input type="number" name="actual_loads" value={formData.actual_loads} onChange={handleChange} disabled={isReadOnly} className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                 </FormRow>
               </section>
-
+                    
+        {notification && (
+            <div className={`mt-4 p-2.5 rounded-md text-xs text-center font-medium animate-pulse ${notification.type === 'success' ? 'bg-green-500/10 border border-green-500/50 text-green-400' : 'bg-red-500/10 border border-red-500/50 text-red-400'}`}>
+              {notification.message}
+            </div>
+          )}
               <div className="pt-8 flex items-center justify-end gap-4">
                 <button type="button" onClick={() => navigate('/master-list')} className="flex items-center gap-2 px-6 py-2.5 border border-gray-300 text-gray-600 rounded-lg font-bold uppercase text-xs hover:bg-gray-50 transition">
                   <X size={16} /> Back to List
@@ -170,8 +184,7 @@ const TaskPage = ({ user }) => {
             </form>
           </div>
         </div>
-      </main>
-    </div>
+    </>
   );
 };
 
