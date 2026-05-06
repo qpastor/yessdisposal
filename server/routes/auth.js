@@ -213,17 +213,6 @@ router.post('/logout', (req, res) => {
     });
     res.status(200).json({ message: "Logged out successfully" });
 });
-// router.post('/logout', (req, res) => {
-//     res.cookie('yess_session', '', {
-//         httpOnly: true,
-//         expires: new Date(0), // Sets the expiration date to the past
-//         secure: false,
-//         //process.env.NODE_ENV === 'production',
-//         sameSite: 'lax',
-//         path: '/'
-//     });
-//     res.status(200).json({ message: "Logged out successfully" });
-// });
 
 // Task Registration
 router.post('/task-register', protect, adminOnly, async (req, res) => {
@@ -348,6 +337,19 @@ router.delete('/tasks/:id', protect, adminOnly,async (req, res) => {
         }
 
         res.json({ message: "Task was deleted!" });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+//Get All Requests List
+router.get('/requests', async (req, res) => {
+    try {
+        const queryText = `
+            SELECT * FROM requests`;
+        const result = await pool.query(queryText);
+        res.json(result.rows);
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ error: "Internal Server Error" });

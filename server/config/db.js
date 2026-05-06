@@ -5,13 +5,20 @@ dotenv.config(); // This replaces require('dotenv').config()
 
 const { Pool } = pkg;
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    // This is mandatory for Render/Cloud PostgreSQL connections
-    rejectUnauthorized: false,
-  },
-});
+const dbConfig = process.env.DATABASE_URL 
+  ? { 
+      connectionString: process.env.DATABASE_URL,
+      ssl: isProd ? { rejectUnauthorized: false } : false 
+    }
+  : {
+      user: process.env.DB_USER,
+      host: process.env.DB_HOST,
+      database: process.env.DB_NAME,
+      password: process.env.DB_PASSWORD,
+      port: process.env.DB_PORT,
+    };
+
+const pool = new Pool(dbConfig);
 // const pool = new Pool({
 //   user: process.env.DB_USER,
 //   host: process.env.DB_HOST,
