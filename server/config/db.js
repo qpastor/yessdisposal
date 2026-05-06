@@ -3,6 +3,9 @@ import pkg from 'pg';
 
 dotenv.config(); // This replaces require('dotenv').config()
 
+// --- ADD THIS LINE ---
+const isProd = process.env.NODE_ENV === 'production';
+
 const { Pool } = pkg;
 
 const dbConfig = process.env.DATABASE_URL 
