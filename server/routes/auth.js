@@ -227,15 +227,18 @@ router.post('/task-register', protect, adminOnly, async (req, res) => {
             trucker, 
             dump_facility,
             schedule_date,
-            invoice
+            invoice,
+            actual_loads,
+            trucker_invoice,
+            dump_facility_invoice,
+            remarks
         } = req.body;
-
         // 2. Insert into the database
         const newTask = await pool.query(
-            `INSERT INTO tasks (status_id, job_site, customer, loads, material, trucker, dump_facility, schedule_date, invoice) 
-             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+            `INSERT INTO tasks (status_id, job_site, customer, loads, material, trucker, dump_facility, schedule_date, invoice, actual_loads, trucker_invoice, dump_facility_invoice, remarks, created_at) 
+             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW()) 
              RETURNING *`,
-            [status_id, job_site, customer, loads, material, trucker, dump_facility, schedule_date, invoice]
+            [status_id, job_site, customer, loads, material, trucker, dump_facility, schedule_date, invoice, actual_loads, trucker_invoice, dump_facility_invoice, remarks]
         );
 
         // 3. Return the newly created task
@@ -248,13 +251,37 @@ router.post('/task-register', protect, adminOnly, async (req, res) => {
 });
 
 // Get all Tasks List
-router.get('/tasks', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT t.*,s.status_name FROM tasks t LEFT JOIN status s ON t.status_id = s.status_id ORDER BY schedule_date DESC');
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).send('Server Error');
-  }
+// router.get('/tasks', async (req, res) => {
+//   try {
+//     const result = await pool.query('SELECT t.*,s.status_name FROM tasks t LEFT JOIN status s ON t.status_id = s.status_id ORDER BY schedule_date DESC');
+//     res.json(result.rows);
+//   } catch (err) {
+//     res.status(500).send('Server Error');
+//   }
+// });
+
+router.get('/tasks', protect, async (req, res) => {
+    const { status } = req.query; // Get status from the URL
+    try {
+        let query = `
+            SELECT t.*, s.status_name 
+            FROM tasks t 
+            JOIN status s ON t.status_id = s.status_id
+        `;
+        let params = [];
+
+        if (status) {
+            query += ` WHERE s.status_name = $1`;
+            params.push(status);
+        }
+
+        query += ` ORDER BY t.created_at DESC`;
+
+        const allTasks = await pool.query(query, params);
+        res.json(allTasks.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Get all Status of Tasks for Dashboard
@@ -302,14 +329,18 @@ router.put('/tasks/:id', protect, adminOnly, async (req, res) => {
             invoice,
             completed_date,
             actual_loads,
-            status_id
+            status_id,
+            trucker_invoice,
+            dump_facility_invoice,
+            remarks
+
         } = req.body;
 
         const cleanDate = (date) => (date === "" || date === undefined) ? null : date;
         const cleanNum = (num) => (num === "" || num === undefined) ? null : num;
         const task = await pool.query(
-            `UPDATE tasks SET job_site = $1, customer = $2, loads = $3, material = $4, trucker = $5, dump_facility = $6, schedule_date = $7, invoice = $8, completed_date = $9, actual_loads = $10, status_id = $11 WHERE task_id = $12 RETURNING *`, 
-            [job_site, customer, cleanNum(loads), material, trucker, dump_facility, cleanDate(schedule_date), cleanNum(invoice), cleanDate(completed_date), cleanNum(actual_loads), status_id, id]
+            `UPDATE tasks SET job_site = $1, customer = $2, loads = $3, material = $4, trucker = $5, dump_facility = $6, schedule_date = $7, invoice = $8, completed_date = $9, actual_loads = $10, status_id = $11, trucker_invoice = $12, dump_facility_invoice = $13, remarks = $14 WHERE task_id = $15 RETURNING *`, 
+            [job_site, customer, cleanNum(loads), material, trucker, dump_facility, cleanDate(schedule_date), cleanNum(invoice), cleanDate(completed_date), cleanNum(actual_loads), status_id, trucker_invoice, dump_facility_invoice, remarks, id]
         );
 
         if (task.rows.length === 0) {
