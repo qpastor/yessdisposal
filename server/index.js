@@ -7,6 +7,9 @@ import cookieParser from 'cookie-parser';
 dotenv.config();
 const app = express();
 
+// ADD THIS LINE RIGHT HERE
+app.set('trust proxy', 1);
+
 app.use(cookieParser());
 app.use(express.json());
 
