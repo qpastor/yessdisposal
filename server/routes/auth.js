@@ -12,7 +12,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 const cookieOptions = {
     httpOnly: true,
     secure: true, // Set to true in production
-    sameSite: none,
+    sameSite: 'none',
     maxAge: 24 * 60 * 60 * 1000,
     path: '/',
 };
