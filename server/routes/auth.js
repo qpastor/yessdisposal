@@ -8,14 +8,24 @@ const router = express.Router();
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+// PRODUCTION SETUP
 const cookieOptions = {
     httpOnly: true,
-    secure: isProduction, // Set to true in production
-    sameSite: isProduction ? 'none' : 'lax', 
+    secure: true, // Set to true in production
+    sameSite: none,
     maxAge: 24 * 60 * 60 * 1000,
     path: '/',
-    domain: isProduction ? '.yessdisposal.com' : 'localhost'
 };
+
+// DEVELOPMENTE SETUP
+// const cookieOptions = {
+//     httpOnly: true,
+//     secure: isProduction, // Set to true in production
+//     sameSite: isProduction ? 'none' : 'lax', 
+//     maxAge: 24 * 60 * 60 * 1000,
+//     path: '/',
+//     domain: isProduction ? '.yessdisposal.com' : 'localhost'
+// };
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { 
