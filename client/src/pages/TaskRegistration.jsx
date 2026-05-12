@@ -16,7 +16,12 @@ import instance from '../api';
     material: '',
     trucker: '',
     dumpFacility: '',
-    invoice: ''
+    invoice: '',
+    actual_loads: '',
+    trucker_invoice: '',
+    dump_facility_invoice: '',
+    remarks: '',
+    created_at: new Date().toISOString().split('T')[0]
   });
 
   useEffect(() => {
@@ -41,17 +46,25 @@ import instance from '../api';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const payload = {
+    ...formData,
+    // Required number: ensure it's a number, default to 0 if empty
+    loads: formData.loads === "" ? 0 : Number(formData.loads),
+    
+    // Optional number: send null if empty, otherwise PostgreSQL will crash on ""
+    actual_loads: formData.actual_loads === "" ? 0 : Number(formData.actual_loads),
+    
+    // Mapping camelCase React state to snake_case Backend expectations
+    job_site: formData.jobSite,
+    dump_facility: formData.dumpFacility
+  };
+
     try {
       const response = await fetch('http://localhost:5001/api/auth/task-register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          ...formData,
-          loads: Number(formData.loads),
-          job_site: formData.jobSite,
-          dump_facility: formData.dumpFacility
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
@@ -68,14 +81,10 @@ import instance from '../api';
 
   return (
     <>
-        <header className="bg-white p-6 shadow-sm border-b border-gray-200">
-          <h2 className="text-2xl font-semibold text-[#1e293b]">Task Registration</h2>
-        </header>
-
         <div className="w-full max-w-5xl mx-auto p-4 md:p-8">
           <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
             <div className="px-8 pt-8 pb-4">
-              <h3 className="text-lg font-bold text-gray-800 mb-2">Job Information</h3>
+              <h3 className="text-lg font-bold text-gray-800 mb-2">Task Information</h3>
               <div className="h-1 bg-green-500 w-16 mb-8 rounded-full"></div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -131,8 +140,36 @@ import instance from '../api';
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Invoice</label>
                     <input type="text" name="invoice" value={formData.invoice} onChange={handleChange} placeholder="Inv-001" className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                   </div>
+              
+                {/*Actual Loads */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Actual Loads</label>
+                   <input type="number" name="actual_loads" value={formData.actual_loads} onChange={handleChange} placeholder="0" className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                 </div>
-
+                  {/* Trucker Invoice */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trucker Invoice</label>
+                   <input type="text" name="trucker_invoice" value={formData.trucker_invoice} onChange={handleChange} placeholder="Inv-001" className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+                  {/* Dump Facility Invoice */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Dump Facility Invoice</label>
+                  <input type="text" name="dump_facility_invoice" value={formData.dump_facility_invoice} onChange={handleChange} placeholder="Inv-001" className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                </div>
+                  {/* Remarks */} 
+                <div className="hidden md:block"></div> 
+              </div>
+                {/* Remarks - Now starting on the Left (Column 1) under the Invoice */}
+                <div className="flex flex-col gap-1.5 md:col-start-1">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Remarks</label>
+                  <textarea 
+                   name="remarks" 
+                   value={formData.remarks} 
+                   onChange={handleChange} 
+                   placeholder="Additional notes..." 
+                   className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+                   rows={4} />
+                </div>
                 <div className="flex items-center gap-4 pt-6 pb-8">
                   <button type="submit" className="flex items-center justify-center gap-2 px-8 py-3 bg-[#2D3E50] text-white font-semibold rounded-lg hover:bg-slate-700 transition-all shadow-lg active:scale-95">
                     <Save size={18} /> Create Task

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Settings, X, Save, Briefcase } from 'lucide-react';
-import Sidebar from "../components/navigation/Sidebar";
 import instance from '../api'; // Import the configured Axios instance
 
 const FormRow = ({ label, children }) => (
@@ -30,7 +29,11 @@ const TaskPage = ({ user }) => {
     invoice: '',
     completed_date: '',
     actual_loads: '',
-    status_id: ''
+    status_id: '',
+    trucker_invoice: '',
+    dump_facility_invoice: '',
+    remarks: '',
+    created_at: ''
   });
 
   const isReadOnly = user?.role_name === 'View Only';
@@ -76,7 +79,11 @@ const TaskPage = ({ user }) => {
           dump_facility: task.dump_facility || '',
           invoice: task.invoice || '',
           actual_loads: task.actual_loads || '',
-          status_id: task.status_id || ''
+          trucker_invoice: task.trucker_invoice || '',
+          dump_facility_invoice: task.dump_facility_invoice || '',
+          status_id: task.status_id || '',
+          remarks: task.remarks || '',
+          created_at: formatDate(task.created_at) || ''
         });
       } catch (err) {
         alert("Could not load task details.");
@@ -115,9 +122,9 @@ const TaskPage = ({ user }) => {
 
   return (
     <>
-        <header className="bg-white p-6 shadow-sm border-b border-gray-200">
-          <h2 className="text-2xl font-semibold text-[#1e293b]">Job Details</h2>
-        </header>
+        {/* <header className="bg-white p-6 shadow-sm border-b border-gray-200">
+          <h2 className="text-2xl font-semibold text-[#1e293b]">Task Details</h2>
+        </header> */}
 
         <div className="w-full max-w-4xl mx-auto p-4 md:p-8">
           <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
@@ -138,6 +145,9 @@ const TaskPage = ({ user }) => {
                     ))}
                   </select>
                 </FormRow>
+                <FormRow label="Created On">
+                  <label className="w-48 px-4 py-2 outline-none">{formData.created_at}</label>
+                </FormRow>
 
                 <FormRow label="Schedule Date">
                   <input type="date" name="schedule_date" value={formData.schedule_date} onChange={handleChange} disabled={isReadOnly} className="w-48 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
@@ -145,6 +155,14 @@ const TaskPage = ({ user }) => {
 
                 <FormRow label="Customer">
                   <input type="text" name="customer" value={formData.customer} onChange={handleChange} disabled={isReadOnly} className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                </FormRow>
+
+                <FormRow label="Trucker">
+                  <input type="text" name="trucker" value={formData.trucker} onChange={handleChange} disabled={isReadOnly} className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                </FormRow>
+
+                <FormRow label="Dump Facility">
+                  <input type="text" name="dump_facility" value={formData.dump_facility} onChange={handleChange} disabled={isReadOnly} className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
                 </FormRow>
 
                 <FormRow label="Expected Loads">
@@ -163,6 +181,15 @@ const TaskPage = ({ user }) => {
 
                 <FormRow label="Actual Loads">
                   <input type="number" name="actual_loads" value={formData.actual_loads} onChange={handleChange} disabled={isReadOnly} className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                </FormRow>
+                <FormRow label="Trucker Invoice">
+                  <input type="text" name="trucker_invoice" value={formData.trucker_invoice} onChange={handleChange} disabled={isReadOnly} className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                </FormRow>
+                <FormRow label="Dump Facility Invoice">
+                  <input type="text" name="dump_facility_invoice" value={formData.dump_facility_invoice} onChange={handleChange} disabled={isReadOnly} className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                </FormRow>
+                <FormRow label="Remarks">
+                  <textarea name="remarks" value={formData.remarks} onChange={handleChange} disabled={isReadOnly} className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" rows={4} />
                 </FormRow>
               </section>
                     

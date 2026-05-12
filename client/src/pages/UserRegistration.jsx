@@ -76,14 +76,14 @@ const handleSubmit = async (e) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 overflow-hidden">
-      <Sidebar user={user} />
+    // <div className="flex min-h-screen bg-slate-50 overflow-hidden">
+    //   {/* <Sidebar user={user} /> */}
 
-      {/* Responsive margin added here */}
-      <main className="flex-1 ml-[250px] max-md:ml-[60px] transition-all duration-300 overflow-y-auto">
-        <header className="bg-white p-6 shadow-sm border-b border-gray-200">
-          <h2 className="text-2xl font-semibold text-[#1e293b]">User Registration</h2>
-        </header>
+    //   {/* Responsive margin added here */}
+    //   <main className="flex-1 ml-[250px] max-md:ml-[60px] transition-all duration-300 overflow-y-auto">
+    //     <header className="bg-white p-6 shadow-sm border-b border-gray-200">
+    //       <h2 className="text-2xl font-semibold text-[#1e293b]">User Registration</h2>
+    //     </header>
 
         <div className="w-full max-w-5xl mx-auto p-4 md:p-8">
           <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
@@ -141,8 +141,6 @@ const handleSubmit = async (e) => {
             </div>
           </div>
         </div>
-      </main>
-    </div>
   );
 };
 

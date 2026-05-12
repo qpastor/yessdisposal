@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Search, UserPlus, Download, ChevronDown, Pencil, Trash2, ChevronLeft, 
-  ChevronRight, ChevronsLeft, ChevronsRight, Filter 
+  ChevronRight, ChevronsLeft, ChevronsRight, Filter, Ban
 } from 'lucide-react';
 import Sidebar from "../components/navigation/Sidebar"; 
 import instance from '../api'; // Import the configured Axios instance
@@ -100,7 +100,6 @@ export default function UserTable({ user }) {
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-[#2D3E50] text-white text-sm font-medium">
-                  <th className="p-4 w-10"><input type="checkbox" className="rounded" /></th>
                   <th className="p-4">Full Name</th>
                   <th className="p-4">Email</th>
                   <th className="p-4">Username</th>
@@ -112,7 +111,6 @@ export default function UserTable({ user }) {
               <tbody className="text-sm">
                 {users.map((u) => (
                   <tr key={u.userid} className="border-b last:border-none hover:bg-gray-50 transition-colors">
-                    <td className="p-4"><input type="checkbox" className="rounded" /></td>
                     <td className="p-4">
                       <span className="font-medium text-gray-900">{u.name}</span>
                     </td>
@@ -136,11 +134,11 @@ export default function UserTable({ user }) {
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button 
-                          title="Delete User"
+                          title="Disable User"
                           className="text-gray-400 hover:text-red-600 transition-colors" 
                           onClick={() => deleteUser(u.userid)}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Ban className="w-4 h-4" />
                         </button>
                       </div>
                     </td>

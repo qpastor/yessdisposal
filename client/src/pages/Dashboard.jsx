@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from "../components/navigation/Sidebar";
 import instance from '../api';
+import { useNavigate } from 'react-router-dom';
 
 // --- 2. HELPER ---
 const getCardConfig = (statusName) => {
@@ -17,10 +17,14 @@ const getCardConfig = (statusName) => {
 };
 
 // --- 3. STATCARD ---
-const StatCard = ({ bgColor, title1, value1, title2, value2 }) => {
+const StatCard = ({ bgColor, title1, value1, title2, value2, onClick }) => {
   return (
     /* Removed text-white and added shadow-sm */
-    <div className={`${bgColor} flex-1 min-w-[240px] h-[160px] rounded-sm p-6 flex flex-col shadow-md`}>
+    <div 
+    onClick={onClick}
+    className={`${bgColor} flex-1 min-w-[240px] h-[160px] rounded-sm p-6 flex flex-col shadow-md 
+        cursor-pointer transition-all duration-300 ease-in-out
+        hover:-translate-y-1 hover:shadow-xl hover:brightness-95`}>
       
       {/* Title: Using Slate 800 */}
       <div className="flex justify-between mb-4 text-[15px] font-medium text-slate-800 opacity-90">
@@ -42,8 +46,9 @@ const StatCard = ({ bgColor, title1, value1, title2, value2 }) => {
 };
 
 // --- 4. MAIN DASHBOARD ---
-const Dashboard = ({ user }) => {
+const Dashboard = () => {
   const [stats, setStats] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -56,6 +61,11 @@ const Dashboard = ({ user }) => {
     };
     fetchStats();
   }, []);
+
+  const handleCardClick = (statusName) => {
+    // Navigates to Task List with a query parameter
+    navigate(`/task?status=${encodeURIComponent(statusName)}`);
+  };
 
   return (
     <div className="p-10 antialiased">
@@ -74,6 +84,7 @@ const Dashboard = ({ user }) => {
                 value1={stat.count}
                 title2="Updated Just Now"
                 value2=""
+                onClick={() => handleCardClick(stat.status_name)}
               />
             );
           })}

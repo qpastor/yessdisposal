@@ -105,10 +105,10 @@ const UserPage = ({ user }) => {
 
   return (
     <>
-        <header className="bg-white p-6 shadow-sm border-b border-gray-200 flex justify-between items-center">
+        {/* <header className="bg-white p-6 shadow-sm border-b border-gray-200 flex justify-between items-center">
           <h2 className="text-2xl font-semibold text-[#1e293b]">Edit User</h2>
           <Settings size={20} className="text-slate-400" />
-        </header>
+        </header> */}
           {notification && (
             <div className={`mt-4 p-2.5 rounded-md text-xs text-center font-medium animate-pulse ${notification.type === 'success' ? 'bg-green-500/10 border border-green-500/50 text-green-400' : 'bg-red-500/10 border border-red-500/50 text-red-400'}`}>
               {notification.message}

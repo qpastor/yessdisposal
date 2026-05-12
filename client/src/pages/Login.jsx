@@ -9,7 +9,7 @@ export default function Login({ onLogin }) {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     const loginData = { username, password };
@@ -20,11 +20,22 @@ const handleSubmit = async (e) => {
       navigate('/dashboard'); 
 
     } catch (error) {
-      const errorMessage = error.response?.data?.message || "Incorrect username or password.";
-      setError(errorMessage);
-      console.error("Error connecting to server:", error);
+      // If the server responded with a status code (like 401, 403, 500)
+      if (error.response) {
+        const errorMessage = error.response.data?.message || "Incorrect username or password.";
+        setError(errorMessage);
+      } 
+      // If the request was made but no response was received (Server is down)
+      else if (error.request) {
+        setError("Unable to reach the server. Please check your connection.");
+      } 
+      // Everything else
+      else {
+        setError("An unexpected error occurred.");
+      }
     }
   };
+
 
   return (
     /* Background changed to the Dashboard Navy Blue */

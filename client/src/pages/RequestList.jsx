@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, UserPlus, Pencil, Trash2 } from 'lucide-react';
+import { Search, Pencil, Trash2 } from 'lucide-react';
 import instance from '../api'; // Import the configured Axios instance
 
 
@@ -49,7 +49,6 @@ export default function RequestTable({ user }) {
 const viewTask = async (id) => {
   try {
     const response = await instance.get(`/api/auth/requests/${id}`);
-    console.log("Request details:", response.data);
     navigate(`/request-details/${id}`, { state: { request: response.data } });
   } catch (err) {
     console.error("Error fetching request details:", err);
