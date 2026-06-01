@@ -17,6 +17,7 @@ import TaskList from './pages/TaskList';
 import TaskRegistration from './pages/TaskRegistration';
 import TaskPage from './pages/TaskPage';
 import RequestList from './pages/RequestList';
+import RequestPage from './pages/RequestPage';
 import PageNotFound from './lib/PageNotFound';
 
 
@@ -62,16 +63,8 @@ const [user, setUser] = useState(() => {
             <Route path="/task-registration" element={<TaskRegistration user={user} />} />
             <Route path="/task-details/:id" element={<TaskPage user={user} />} />
             <Route path="/request-list" element={<RequestList user={user} />} />
+            <Route path="/request-details/:id" element={<RequestPage user={user} />} />
           </Route>
-{/*           
-            <Route path="/dashboard" element={user ? <Dashboard user={user}/> : <Navigate to="/login" />} />
-            <Route path="/user-management" element={user ? <UserManagement user={user}/> : <Navigate to="/login" />} />
-            <Route path="/user-registration" element={user ? <UserRegistration user={user}/> : <Navigate to="/login" />} />            
-            <Route path="/user-details/:id" element={user ? <UserPage user={user}/> : <Navigate to="/login" />} />
-            <Route path="/master-list" element={user ? <MasterList user={user}/> : <Navigate to="/login" />} />
-            <Route path="/task-registration" element={user ? <TaskRegistration user={user}/> : <Navigate to="/login" />} />
-            <Route path="/task-details/:id" element={user ? <TaskPage user={user}/> : <Navigate to="/login" />} /> */}
-            
             <Route path="*" element={<PageNotFound />} />
            </Routes>
         </Router>

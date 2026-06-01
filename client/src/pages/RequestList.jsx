@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Pencil, Trash2 } from 'lucide-react';
+import { Search, ClipboardList } from 'lucide-react';
 import instance from '../api'; // Import the configured Axios instance
 
 
@@ -29,24 +29,7 @@ export default function RequestTable({ user }) {
     fetchTasks();
   }, []);
 
-  const deleteTask = async (id) => {
-  if (window.confirm("Are you sure you want to delete this task?")) {
-    try {
-      // Call backend to delete from Database
-      await instance.delete(`/api/auth/requests/${id}`);
-
-      // Update UI state to remove the deleted task
-      setRequests(requests.filter((request) => request.request_id !== id));
-      
-      alert("Request deleted successfully");
-    } catch (err) {
-      console.error("Delete error:", err);
-      alert("Failed to delete the request.");
-    }
-  }
-};
-
-const viewTask = async (id) => {
+const viewRequest = async (id) => {
   try {
     const response = await instance.get(`/api/auth/requests/${id}`);
     navigate(`/request-details/${id}`, { state: { request: response.data } });
@@ -55,11 +38,6 @@ const viewTask = async (id) => {
     alert("Failed to fetch request details.");
   }
 };
-
-   const addTask = (e) => {
-    e.preventDefault();
-    navigate('/request-registration');
-  };
   
 
   if (loading) return <div className="p-10 text-center">Loading requests...</div>;
@@ -82,33 +60,30 @@ const viewTask = async (id) => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-[#2D3E50] text-white text-sm font-medium">
-                <th className="p-3"><input type="checkbox" className="rounded" /></th>
                 <th className="p-3">Request Number</th>
                 <th className="p-3">Full Name</th>
                 <th className="p-3">Email</th>
                 <th className="p-3">Phone</th>
                 <th className="p-3">Project Details</th>
                 <th className="p-3">Requested Date</th>
+                <th className="p-3">Contacted?</th>
                 <th className="p-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="text-sm">
               {requests.map((request) => (
                 <tr key={request.request_id} className="border-b hover:bg-gray-50 transition-colors">
-                  <td className="p-3"><input type="checkbox" className="rounded" /></td>
                   <td className="p-3">{request.request_id}</td>
                   <td className="p-3 text-gray-600">{request.fullname}</td>
                   <td className="p-3 text-gray-600">{request.email}</td>
                   <td className="p-3 text-gray-600">{request.phone}</td>
                   <td className="p-3 text-gray-600">{request.project_details}</td>
-                  <td className="p-3 text-gray-600">{request.created_at}</td>
+                  <td className="p-3 text-gray-600">{new Date(request.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
+                  <td className="p-3 text-gray-600">{request.contacted ? 'Yes' : 'No'}</td>
                   <td className="p-3">
                     <div className="flex justify-center gap-3">
-                      <button className="text-gray-400 hover:text-blue-600" onClick={() => viewTask(request.request_id)}>
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button className="text-gray-400 hover:text-red-600" onClick={() => deleteTask(request.request_id)}>
-                        <Trash2 className="w-4 h-4" />
+                      <button className="text-gray-400 hover:text-blue-600" onClick={() => viewRequest(request.request_id)}>
+                        <ClipboardList className="w-4 h-4" />
                       </button>
                     </div>
                   </td>

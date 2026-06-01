@@ -16,17 +16,33 @@ export default function UserTable({ user }) {
   // --- Fetch Data from Backend ---
   useEffect(() => {
     const fetchTasks = async () => {
-      try {
-        setLoading(true);
-        // Replace with your actual API endpoint (e.g., http://localhost:5000/api/tasks)
-        const response = await instance.get('/api/auth/tasks');
-        setTasks(response.data); 
-      } catch (err) {
-        setError("Failed to fetch tasks");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
+      // try {
+      //   setLoading(true);
+      //   // Replace with your actual API endpoint (e.g., http://localhost:5000/api/tasks)
+      //   const response = await instance.get('/api/auth/tasks');
+      //   setTasks(response.data); 
+      // } catch (err) {
+      //   setError("Failed to fetch tasks");
+      //   console.error(err);
+      // } finally {
+      //   setLoading(false);
+      // }
+    try {
+  setLoading(true);
+  const response = await instance.get('/api/auth/tasks');
+  
+  // Check if response.data is the new object format with a tasks property
+  if (response.data && response.data.tasks) {
+    setTasks(response.data.tasks); // Extract the array out of the object
+  } else {
+    setTasks(Array.isArray(response.data) ? response.data : []); // Fallback protection
+  }
+} catch (err) {
+  setError("Failed to fetch tasks");
+  console.error(err);
+} finally {
+  setLoading(false);
+}
     };
 
     fetchTasks();
@@ -141,6 +157,7 @@ const viewTask = async (id) => {
             <thead>
               <tr className="bg-[#2D3E50] text-white text-sm font-medium">
                 {/* <th className="p-3"><input type="checkbox" className="rounded" /></th> */}
+                <th className="p-3 text-center">Actions</th>
                 <th className="p-3">Status</th>
                 <th className="p-3">Created On</th>
                 <th className="p-3">Schedule Date</th>
@@ -156,13 +173,20 @@ const viewTask = async (id) => {
                 <th className="p-3">Trucker Invoice</th>
                 <th className="p-3">Dump Facility Invoice</th>
                 <th className="p-3">Notes</th>
-                <th className="p-3 text-center">Actions</th>
+                
               </tr>
             </thead>
             <tbody>
   {currentRecords.length > 0 ? (
     currentRecords.map((task) => (
       <tr key={task.id} className="border-b hover:bg-slate-50 transition-colors">
+        <td className="p-3">
+                    <div className="flex justify-center gap-3">
+                      <button className="text-gray-400 hover:text-blue-600" onClick={() => viewTask(task.task_id)}>
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>   
         <td className="p-3">{task.status_name}</td>
         <td className="p-3">{new Date(task.created_at).toLocaleDateString('en-US', {
                                 month: 'long',
@@ -185,22 +209,13 @@ const viewTask = async (id) => {
                                 month: 'long',
                                 day: 'numeric',
                                 year: 'numeric'
-                    })}</td>
+                    })|| <span className="text-slate-500 italic">N/A</span>}</td>
         <td className="p-3">{task.actual_loads === "Empty" || task.actual_loads === 0 || task.actual_loads === "0" ? "N/A" : task.actual_loads}
                       </td>
         <td className="p-3">{task.trucker_invoice || <span className="text-slate-500 italic">No Invoice</span>}</td>
         <td className="p-3">{task.dump_facility_invoice || <span className="text-slate-500 italic">No Invoice</span>}</td>
         <td className="p-3">{task.remarks || <span className="text-slate-500 italic">N/A</span>}</td>
-        <td className="p-3">
-                    <div className="flex justify-center gap-3">
-                      <button className="text-gray-400 hover:text-blue-600" onClick={() => viewTask(task.task_id)}>
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      {/* <button className="text-gray-400 hover:text-red-600" onClick={() => deleteTask(task.task_id)}>
-                        <Trash2 className="w-4 h-4" />
-                      </button> */}
-                    </div>
-                  </td>        
+             
       </tr>
     ))
   ) : (
