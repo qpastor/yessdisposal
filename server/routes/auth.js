@@ -8,7 +8,7 @@ const router = express.Router();
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// PRODUCTION SETUP
+// // PRODUCTION SETUP
 const cookieOptions = {
     httpOnly: true,
     secure: true, // Set to true in production
@@ -260,36 +260,65 @@ router.post('/task-register', protect, adminOnly, async (req, res) => {
     }
 });
 
-// Get all Tasks List
-// router.get('/tasks', async (req, res) => {
-//   try {
-//     const result = await pool.query('SELECT t.*,s.status_name FROM tasks t LEFT JOIN status s ON t.status_id = s.status_id ORDER BY schedule_date DESC');
-//     res.json(result.rows);
-//   } catch (err) {
-//     res.status(500).send('Server Error');
-//   }
-// });
-
 router.get('/tasks', protect, async (req, res) => {
-    const { status } = req.query; // Get status from the URL
+    const { status } = req.query;
+    
+    // Check if the frontend specifically asked for pagination parameters
+    const hasPagination = req.query.page && req.query.limit;
+    
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const offset = (page - 1) * limit;
+
     try {
-        let query = `
+        let tasksQuery = `
             SELECT t.*, s.status_name 
             FROM tasks t 
             JOIN status s ON t.status_id = s.status_id
         `;
-        let params = [];
+        
+        let countQuery = `
+            SELECT COUNT(*) 
+            FROM tasks t 
+            JOIN status s ON t.status_id = s.status_id
+        `;
+
+        let dataParams = [];
+        let countParams = [];
 
         if (status) {
-            query += ` WHERE s.status_name = $1`;
-            params.push(status);
+            tasksQuery += ` WHERE s.status_name = $1`;
+            countQuery += ` WHERE s.status_name = $1`;
+            dataParams.push(status);
+            countParams.push(status);
         }
 
-        query += ` ORDER BY t.created_at DESC`;
+        // 1. Get the total matching count
+        const totalCountResult = await pool.query(countQuery, countParams);
+        const totalTasks = parseInt(totalCountResult.rows[0].count, 10);
 
-        const allTasks = await pool.query(query, params);
-        res.json(allTasks.rows);
+        // 2. ONLY apply LIMIT and OFFSET if pagination parameters were provided
+        if (hasPagination) {
+            tasksQuery += ` ORDER BY t.created_at DESC LIMIT $${dataParams.length + 1} OFFSET $${dataParams.length + 2}`;
+            dataParams.push(limit, offset);
+        } else {
+            // MasterList or any client requesting everything gets all data sorted
+            tasksQuery += ` ORDER BY t.created_at DESC`;
+        }
+
+        const allTasks = await pool.query(tasksQuery, dataParams);
+        const totalPages = hasPagination ? Math.ceil(totalTasks / limit) : 1;
+
+        // 3. Return the exact structure both files can digest smoothly
+        res.json({
+            tasks: allTasks.rows,
+            totalTasks,
+            totalPages,
+            currentPage: page
+        });
+
     } catch (err) {
+        console.error("Backend Error:", err.message);
         res.status(500).json({ error: err.message });
     }
 });
@@ -364,6 +393,26 @@ router.put('/tasks/:id', protect, adminOnly, async (req, res) => {
     }
 });
 
+//Disable a specific user by ID
+router.put('/users/:id/disable', protect, adminOnly, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await pool.query(
+            "UPDATE users SET isactive = false WHERE userid = $1 RETURNING *",
+            [id]
+        );
+
+        if (user.rows.length === 0) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        res.json(user.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
 // DELETE a specific task
 router.delete('/tasks/:id', protect, adminOnly,async (req, res) => {
     try {
@@ -394,6 +443,61 @@ router.get('/requests', async (req, res) => {
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+router.get('/requests/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const request = await pool.query(
+            'SELECT * FROM requests WHERE request_id = $1',
+            [id]
+        );
+
+        if (request.rows.length === 0) {
+            return res.status(404).json({ error: "Request not found" });
+        }
+
+        res.json(request.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+router.put('/requests/:id', async (req, res) => {
+    const { id } = req.params;
+    const { contacted } = req.body;
+
+    try {
+        // Only update 'contacted', as customer details (name, email, etc.) are read-only text elements
+        const updateQuery = `
+            UPDATE requests
+            SET 
+                contacted = $1,
+                updated_at = NOW()
+            WHERE request_id = $2
+            RETURNING *;
+        `;
+
+        // Coerce input values safely into true/false states
+        const values = [
+            contacted ?? false, 
+            id
+        ];
+
+        const result = await pool.query(updateQuery, values);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Request entry not found." });
+        }
+
+        // Send back the updated database object row to React
+        res.json(result.rows[0]);
+
+    } catch (err) {
+        console.error("❌ Database update failure inside PUT /api/auth/requests:", err.message);
+        res.status(500).json({ error: "Failed to update data records." });
     }
 });
 

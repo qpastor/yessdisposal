@@ -1,10 +1,12 @@
 import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import cors from "cors";
 import authRoutes from './routes/auth.js'; // Ensure the .js extension is here
 import cookieParser from 'cookie-parser';
+import qboRoutes from './routes/qbo.js';
 
-dotenv.config();
+
 const app = express();
 
 // ADD THIS LINE RIGHT HERE
@@ -12,6 +14,7 @@ app.set('trust proxy', 1);
 
 app.use(cookieParser());
 app.use(express.json());
+
 
 const allowedOrigins = [
     'http://localhost:5173', 
@@ -45,6 +48,7 @@ app.use(cors({
 
 // Auth Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/qbo', qboRoutes);
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server on ${PORT}`));
