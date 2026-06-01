@@ -63,7 +63,8 @@ const Dashboard = () => {
 
 const fetchQBOData = useCallback(() => {
   console.log("Fetching/Refreshing QBO data...");
-  fetch('http://localhost:5001/api/qbo/invoices')
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+  fetch(`${baseUrl}/api/qbo/invoices`)
     .then(res => {
       if (!res.ok) {
         // If 401 or 500 occurs, throw to drop to the .catch() block
