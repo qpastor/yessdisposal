@@ -17,6 +17,7 @@ export default function UserTable({ user }) {
 
   // Check if the logged-in user is an Admin for feature gating
   const isAdmin = user?.role_name === 'Admin';
+  const isViewOnly = user?.role_name === 'View Only';
 
   // --- Fetch Users from Backend ---
   const fetchUsers = async () => {
@@ -115,18 +116,21 @@ export default function UserTable({ user }) {
               </div>
               
             </div>
-
+            
             <div className="flex items-center gap-3">
+              {!isViewOnly&& (
+                <>
               <button className="flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium hover:bg-gray-50 text-gray-600">
                 <Download className="w-4 h-4" /> Export
               </button>
-              {isAdmin && (
+              
                 <button 
                   onClick={addUser} 
                   className="flex items-center gap-2 px-4 py-2 bg-[#2D3E50] text-white rounded-md text-sm font-medium hover:bg-slate-700 transition-colors"
                 >
                   <UserPlus className="w-4 h-4"/> Add User
                 </button>
+                </>
               )}
             </div>
           </div>
@@ -158,13 +162,15 @@ export default function UserTable({ user }) {
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
-                        <button 
-                          title="Disable User"
-                          className="text-gray-400 hover:text-red-600 transition-colors" 
-                          onClick={() => disableUser(u.userid)}
-                        >
+                        {isAdmin && (
+                          <button 
+                            title="Disable User"
+                            className="text-gray-400 hover:text-red-600 transition-colors" 
+                            onClick={() => disableUser(u.userid)}
+                          >
                           <Ban className="w-4 h-4" />
                         </button>
+                        )}
                       </div>
                     </td>
                     <td className="p-4">

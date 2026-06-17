@@ -22,7 +22,9 @@ export default function Login({ onLogin }) {
     } catch (error) {
       // If the server responded with a status code (like 401, 403, 500)
       if (error.response) {
-        const errorMessage = error.response.data?.message || "Incorrect username or password.";
+        const errorMessage = 
+        error.response.data?.error || 
+        error.response.data?.message || "Incorrect username or password.";
         setError(errorMessage);
       } 
       // If the request was made but no response was received (Server is down)

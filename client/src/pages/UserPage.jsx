@@ -15,8 +15,8 @@ const FormRow = ({ label, children, required }) => (
 );
 
 const UserPage = ({ user }) => {
-  const isAdmin = user?.role_name === 'Admin';
-  const isReadOnly = user?.role_name === 'View Only';
+  //const isAdmin = user?.role_name === 'Admin';
+  const isViewOnly = user?.role_name === 'View Only';
   const { id } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -124,21 +124,21 @@ const UserPage = ({ user }) => {
             <form onSubmit={handleSubmit} className="p-8 divide-y divide-gray-100">
               <section className="pb-6 space-y-2">
                 <FormRow label="Full Name" required>
-                  <input type="text" name="name" value={formData.name} onChange={handleChange} disabled={isReadOnly} className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50" required />
+                  <input type="text" name="name" value={formData.name} onChange={handleChange} disabled={isViewOnly} className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50" required />
                 </FormRow>
 
                 <FormRow label="Username" required>
-                  <input type="text" name="username" value={formData.username} onChange={handleChange} disabled={isReadOnly} className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50" required />
+                  <input type="text" name="username" value={formData.username} onChange={handleChange} disabled={isViewOnly} className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50" required />
                 </FormRow>
 
                 <FormRow label="Email Address" required>
-                  <input type="email" name="email" value={formData.email} onChange={handleChange} disabled={isReadOnly} className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50" required />
+                  <input type="email" name="email" value={formData.email} onChange={handleChange} disabled={isViewOnly} className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50" required />
                 </FormRow>
 
                 <FormRow label="Account Status">
                   <div className="flex items-center gap-3">
                     <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" name="isactive" checked={formData.isactive} onChange={handleChange} disabled={isReadOnly} className="sr-only peer" />
+                      <input type="checkbox" name="isactive" checked={formData.isactive} onChange={handleChange} disabled={isViewOnly} className="sr-only peer" />
                       <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                     <span className={`text-sm font-bold ${formData.isactive ? 'text-green-600' : 'text-gray-400'}`}>
@@ -148,7 +148,7 @@ const UserPage = ({ user }) => {
                 </FormRow>
 
                 <FormRow label="User Role">
-                  <select name="role_id" value={formData.role_id} onChange={handleChange} disabled={isReadOnly} className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50">
+                  <select name="role_id" value={formData.role_id} onChange={handleChange} disabled={isViewOnly} className="w-full md:w-2/3 px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50">
                     {roles.map((role) => (
                       <option key={role.role_id} value={role.role_id}>{role.role_name}</option>
                     ))}
@@ -160,7 +160,7 @@ const UserPage = ({ user }) => {
                 <button type="button" onClick={() => navigate('/user-management')} className="flex items-center gap-2 px-6 py-2.5 border border-gray-300 text-gray-600 rounded-lg font-bold uppercase text-xs hover:bg-gray-50 transition">
                   <X size={16} /> Cancel
                 </button>
-                {isAdmin && (
+                {!isViewOnly && (
                   <button type="submit" disabled={isSubmitting} className={`flex items-center gap-2 px-8 py-2.5 text-white rounded-lg font-bold uppercase text-xs shadow-lg transition ${isSubmitting ? "bg-slate-400" : "bg-[#2D3E50] hover:bg-slate-700 active:scale-95"}`}>
                     <Save size={16} /> {isSubmitting ? "Updating..." : "Update User Details"}
                   </button>

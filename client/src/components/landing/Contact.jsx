@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Send, MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,9 +10,27 @@ import { toast } from 'sonner';
 export default function Contact() {
   const [form, setForm] = useState({ fullname: '', email: '', phone: '', project_details: '' });
   const [sending, setSending] = useState(false);
+  const [isLockedOut, setIsLockedOut] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    if (isLockedOut) {
+      // 15 minutes in milliseconds (Match this to your backend windowMs)
+      const LOCKOUT_DURATION = 15 * 60 * 1000; 
+
+      timer = setTimeout(() => {
+        setIsLockedOut(false);
+        toast.info("The lockout period has expired. You can now resubmit the form.");
+      }, LOCKOUT_DURATION);
+    }
+
+    // Cleanup the timer if the component unmounts mid-timeout
+    return () => clearTimeout(timer);
+  }, [isLockedOut]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isLockedOut) return;
     setSending(true);
 
   try {
@@ -36,12 +54,21 @@ export default function Contact() {
       toast.success("Message sent! We'll get back to you shortly.");
       // Reset form to initial state
       setForm({ fullname: '', email: '', phone: '', project_details: '' });
-    } else {
+    } 
+    else {
+        // --- RATE LIMITING & ERROR HANDLING UPDATED HERE ---
+        if (response.status === 429) {
+          // Grabs the exact message string sent by your express-rate-limit backend middleware
+          toast.error(data.message || "You're sending messages too fast. Please wait a few minutes.");
+          setIsLockedOut(true);
+        } else {
       toast.error(data.error || 'Something went wrong. Please try again.');
-    }
+     }
+   }
   } catch (err) {
     console.error('Submission Error:', err);
     toast.error('Could not connect to the server.');
+    
   } finally {
     setSending(false);
   }
@@ -110,6 +137,7 @@ export default function Contact() {
                     placeholder="John Smith"
                     className="mt-1.5"
                     required
+                    disabled={isLockedOut}
                   />
                 </div>
                 <div className="grid sm:grid-cols-2 gap-5">
@@ -123,6 +151,7 @@ export default function Contact() {
                       placeholder="john@company.com"
                       className="mt-1.5"
                       required
+                      disabled={isLockedOut}
                     />
                   </div>
                   <div>
@@ -134,6 +163,7 @@ export default function Contact() {
                       onChange={(e) => setForm({ ...form, phone: e.target.value })}
                       placeholder="(555) 000-0000"
                       className="mt-1.5"
+                      disabled={isLockedOut}
                     />
                   </div>
                 </div>
@@ -146,15 +176,18 @@ export default function Contact() {
                     placeholder="Tell us about your project, timeline, and estimated volume..."
                     className="mt-1.5 min-h-[140px]"
                     required
+                    disabled={isLockedOut}
                   />
                 </div>
                 <Button
                   type="submit"
-                  disabled={sending}
+                  disabled={sending || isLockedOut}
                   className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-heading font-semibold h-12 text-base"
                 >
                   {sending ? (
                     <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                  ) : isLockedOut ? (
+                    "Submission Blocked" // <--- Shows visual indicator to the spammer
                   ) : (
                     <>
                       <Send className="w-4 h-4 mr-2" />

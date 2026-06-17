@@ -63,7 +63,7 @@ const Dashboard = () => {
 
 const fetchQBOData = useCallback(() => {
   console.log("Fetching/Refreshing QBO data...");
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+  const baseUrl = import.meta.env.VITE_API_URL; // || 'http://localhost:5001';
   fetch(`${baseUrl}/api/qbo/invoices`)
     .then(res => {
       if (!res.ok) {

@@ -105,6 +105,7 @@
   flex: 70%; /* Takes up the rest of the row */
   display: flex;
   align-items: center;
+  flex-direction: column;
 }
 
 .sidebarFooter {
@@ -123,6 +124,41 @@
   font-size: 14px;
   color: white;
 }
+.passwordResetBtn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1; /* Muted slate text */
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 6px 12px;
+  border-radius: 6px; /* Clean modern rounding */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  width: 100%; /* Spans across the footer area naturally */
+  max-width: 160px;
+}
+
+.passwordResetBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff; /* Turns bright white on hover */
+}
+
+.passwordResetBtn svg {
+  color: #3b82f6; /* Keeps the blue accent just on the key icon */
+  transition: transform 0.2s ease;
+}
+
+.passwordResetBtn:hover svg {
+  transform: rotate(15deg);
+  color: #60a5fa; /* Lightens the blue slightly on hover */
+}
+
 
 /* --- AUTOMATIC LEFT-SIDE MOBILE VIEW --- */
 @media (max-width: 768px) {

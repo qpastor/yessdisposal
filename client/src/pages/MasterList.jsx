@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, UserPlus, Pencil, ChevronLeft, ChevronRight, Ban } from 'lucide-react';
+import {Search, Download, UserPlus, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
 import instance from '../api'; // Import the configured Axios instance
 
 
@@ -13,20 +13,12 @@ export default function UserTable({ user }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage] = useState(10);
 
+  // Check if the logged-in user is an Admin for feature gating
+  const isViewOnly = user?.role_name === 'View Only';
+
   // --- Fetch Data from Backend ---
   useEffect(() => {
     const fetchTasks = async () => {
-      // try {
-      //   setLoading(true);
-      //   // Replace with your actual API endpoint (e.g., http://localhost:5000/api/tasks)
-      //   const response = await instance.get('/api/auth/tasks');
-      //   setTasks(response.data); 
-      // } catch (err) {
-      //   setError("Failed to fetch tasks");
-      //   console.error(err);
-      // } finally {
-      //   setLoading(false);
-      // }
     try {
   setLoading(true);
   const response = await instance.get('/api/auth/tasks');
@@ -69,6 +61,15 @@ export default function UserTable({ user }) {
     task.yess_invoice?.toString().includes(query) // Convert numbers/IDs to string
   );
 });
+
+const handleExportExcel = () => {
+  // Use window.open or an invisible anchor element pointing directly to your new route
+  // This automatically passes along session tokens if your Axios instance uses cookies/sessions.
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+  const exportUrl = `${baseUrl}/api/auth/tasks/export-excel`;
+  
+  window.open(exportUrl, '_blank');
+};
 
   const deleteTask = async (id) => {
   if (window.confirm("Are you sure you want to delete this task?")) {
@@ -117,20 +118,15 @@ const viewTask = async (id) => {
         {/* --- Toolbar (Same as your code) --- */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-2 flex-1 min-w-[300px]">
-            <div className="relative w-full max-sm">
+            <div className="relative w-full flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
             type="text"
             placeholder="Search for Status, Job Site, Customer, Trucker, Material, or Yess Invoice"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 pl-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            className="w-full px-4 py-2 pl-10 border border-gray-200 rounded-full focus:ring-2 focus:ring-blue-500 outline-none transition-all"
   />
-  {/* Search Icon */}
-  <span className="absolute left-3 top-2.5 text-slate-400">
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-    </svg>
-  </span>
   
   {/* Clear Button (Only shows when there is text) */}
   {searchQuery && (
@@ -142,44 +138,52 @@ const viewTask = async (id) => {
     </button>
   )}
             </div>
-          </div>
-
+          </div>         
+            
           <div className="flex items-center gap-3">
+            {!isViewOnly && (
+              <>
+            <button 
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium hover:bg-gray-50 text-gray-600">
+                <Download className="w-4 h-4" /> Export All
+              </button>
             <button onClick={addTask} className="flex items-center gap-2 px-4 py-2 bg-[#2D3E50] text-white rounded-md text-sm font-medium hover:bg-slate-700">
             <UserPlus className="w-4 h-4"/> Add Task
             </button>
+            </>
+            )}
           </div>
+          
         </div>
 
         {/* --- Table --- */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-[#2D3E50] text-white text-sm font-medium">
-                {/* <th className="p-3"><input type="checkbox" className="rounded" /></th> */}
-                <th className="p-3 text-center">Actions</th>
-                <th className="p-3">Status</th>
-                <th className="p-3">Created On</th>
-                <th className="p-3">Schedule Date</th>
-                <th className="p-3">Job Site</th>
-                <th className="p-3">Customer</th>
-                <th className="p-3">Loads</th>
-                <th className="p-3">Material</th>
-                <th className="p-3">Trucker</th>
-                <th className="p-3">Dump Facility</th>
-                <th className="p-3">Yess Invoice</th>
-                <th className="p-3">Completed Date</th>
-                <th className="p-3">Actual Loads</th>
-                <th className="p-3">Trucker Invoice</th>
-                <th className="p-3">Dump Facility Invoice</th>
-                <th className="p-3">Notes</th>
-                
+              <tr className="bg-[#2D3E50] text-white text-sm font-medium tracking-wide">
+                <th className="p-4 text-center font-semibold rounded-tl-xl">Actions</th>
+                <th className="p-4 font-semibold">Status</th>
+                <th className="p-4 font-semibold">Created On</th>
+                <th className="p-4 font-semibold">Schedule Date</th>
+                <th className="p-4 font-semibold">Job Site</th>
+                <th className="p-4 font-semibold">Customer</th>
+                <th className="p-4 font-semibold">Loads</th>
+                <th className="p-4 font-semibold">Material</th>
+                <th className="p-4 font-semibold">Trucker</th>
+                <th className="p-4 font-semibold">Dump Facility</th>
+                <th className="p-4 font-semibold">Yess Invoice</th>
+                <th className="p-4 font-semibold">Completed Date</th>
+                <th className="p-4 font-semibold">Actual Loads</th>
+                <th className="p-4 font-semibold">Trucker Invoice</th>
+                <th className="p-4 font-semibold">Dump Facility Invoice</th>
+                <th className="p-4 font-semibold rounded-tr-xl">Notes</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="text-gray-600 text-sm divide-y divide-gray-100">
   {currentRecords.length > 0 ? (
-    currentRecords.map((task) => (
-      <tr key={task.id} className="border-b hover:bg-slate-50 transition-colors">
+    currentRecords.map((task, index) => (
+      <tr key={task.task_id || index} className="border-b hover:bg-slate-50 transition-colors">
         <td className="p-3">
                     <div className="flex justify-center gap-3">
                       <button className="text-gray-400 hover:text-blue-600" onClick={() => viewTask(task.task_id)}>
@@ -187,34 +191,34 @@ const viewTask = async (id) => {
                       </button>
                     </div>
                   </td>   
-        <td className="p-3">{task.status_name}</td>
-        <td className="p-3">{new Date(task.created_at).toLocaleDateString('en-US', {
+        <td className="p-4">{task.status_name}</td>
+        <td className="p-4 text-gray-500">{new Date(task.created_at).toLocaleDateString('en-US', {
                                 month: 'long',
                                 day: 'numeric',
                                 year: 'numeric'
                     })}</td>
-                    <td className="p-3 font-semibold">{new Date(task.schedule_date).toLocaleDateString('en-US', {
+                    <td className="p-4 font-semibold text-gray-800">{new Date(task.schedule_date).toLocaleDateString('en-US', {
                                 month: 'long',
                                 day: 'numeric',
                                 year: 'numeric'
                     })}</td>
-        <td className="p-3">{task.job_site}</td>
-        <td className="p-3">{task.customer}</td>
-        <td className="p-3">{task.loads}</td>
-        <td className="p-3">{task.material}</td>
-        <td className="p-3">{task.trucker}</td>
-        <td className="p-3">{task.dump_facility}</td>
-        <td className="p-3">{task.invoice || <span className="text-slate-500 italic">No Invoice</span>}</td>
-        <td className="p-3">{new Date(task.completed_date).toLocaleDateString('en-US', {
+        <td className="p-4 text-gray-700">{task.job_site}</td>
+        <td className="p-4 text-gray-700">{task.customer}</td>
+        <td className="p-4 text-gray-700">{task.loads}</td>
+        <td className="p-4 text-gray-700">{task.material}</td>
+        <td className="p-4 text-gray-700">{task.trucker}</td>
+        <td className="p-4 text-gray-700">{task.dump_facility}</td>
+        <td className="p-4 text-gray-700">{task.invoice || <span className="text-slate-500 italic">No Invoice</span>}</td>
+        <td className="p-4 text-gray-700">{new Date(task.completed_date).toLocaleDateString('en-US', {
                                 month: 'long',
                                 day: 'numeric',
                                 year: 'numeric'
                     })|| <span className="text-slate-500 italic">N/A</span>}</td>
-        <td className="p-3">{task.actual_loads === "Empty" || task.actual_loads === 0 || task.actual_loads === "0" ? "N/A" : task.actual_loads}
+        <td className="p-4 text-gray-700">{task.actual_loads === "Empty" || task.actual_loads === 0 || task.actual_loads === "0" ? "N/A" : task.actual_loads}
                       </td>
-        <td className="p-3">{task.trucker_invoice || <span className="text-slate-500 italic">No Invoice</span>}</td>
-        <td className="p-3">{task.dump_facility_invoice || <span className="text-slate-500 italic">No Invoice</span>}</td>
-        <td className="p-3">{task.remarks || <span className="text-slate-500 italic">N/A</span>}</td>
+        <td className="p-4 text-gray-700">{task.trucker_invoice || <span className="text-slate-500 italic">No Invoice</span>}</td>
+        <td className="p-4 text-gray-700">{task.dump_facility_invoice || <span className="text-slate-500 italic">No Invoice</span>}</td>
+        <td className="p-4 text-gray-700">{task.remarks || <span className="text-slate-500 italic">N/A</span>}</td>
              
       </tr>
     ))
