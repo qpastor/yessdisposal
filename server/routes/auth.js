@@ -3,29 +3,41 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import pool from "../config/db.js";
 import { protect, adminOnly } from '../middleware/authMiddleware.js';
-
+import ExcelJS from 'exceljs';
+import rateLimit from 'express-rate-limit';
 const router = express.Router();
 
 const isProduction = process.env.NODE_ENV === 'production';
 
 // // PRODUCTION SETUP
-const cookieOptions = {
-    httpOnly: true,
-    secure: true, // Set to true in production
-    sameSite: 'none',
-    maxAge: 24 * 60 * 60 * 1000,
-    path: '/',
-};
-
-// DEVELOPMENTE SETUP
 // const cookieOptions = {
 //     httpOnly: true,
-//     secure: isProduction, // Set to true in production
-//     sameSite: isProduction ? 'none' : 'lax', 
+//     secure: true, // Set to true in production
+//     sameSite: 'none',
 //     maxAge: 24 * 60 * 60 * 1000,
 //     path: '/',
-//     domain: isProduction ? '.yessdisposal.com' : 'localhost'
 // };
+
+// DEVELOPMENTE SETUP
+const cookieOptions = {
+    httpOnly: true,
+    secure: isProduction, // Set to true in production
+    sameSite: isProduction ? 'none' : 'lax', 
+    maxAge: 24 * 60 * 60 * 1000,
+    path: '/',
+    domain: isProduction ? '.yessdisposal.com' : 'localhost'
+};
+
+const quoteFormLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15-minute window
+    max: 3, // Limit each IP to 2 form submissions per window
+    message: { 
+        error: "Too many requests", 
+        message: "You have submitted too many requests. Please try again after 15 minutes." 
+    },
+    standardHeaders: true, // Returns rate limit info in the headers
+    legacyHeaders: false,  // Disables X-RateLimit-* headers
+});
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { 
@@ -33,8 +45,8 @@ const generateToken = (id) => {
     });
 }
 
-// Task Registration
-router.post('/request-sent', async (req, res) => {
+// Request Registration
+router.post('/request-sent', quoteFormLimiter, async (req, res) => {
     try {
         // 1. Destructure the fields from the request body
         const { 
@@ -60,6 +72,7 @@ router.post('/request-sent', async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
+
 // User Registration
 router.post('/user-register', protect, adminOnly, async (req, res) => {
     const { username, name, email, password, role_id } = req.body;
@@ -82,6 +95,50 @@ router.post('/user-register', protect, adminOnly, async (req, res) => {
         console.error(err.message);
         res.status(500).json({ error: "Internal Server Error" });
     }  
+});
+
+router.put('/change-password', protect, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        
+        // Grab the logged-in user id parsed dynamically by your 'protect' middleware
+        const userId = req.user?.id || req.user?.userid; 
+
+        if (!userId) {
+            return res.status(401).json({ error: "Not authorized, user reference missing." });
+        }
+
+        // 1. Fetch user from database to check the current password string
+        const userResult = await pool.query('SELECT password FROM users WHERE userid = $1', [userId]);
+        
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        const user = userResult.rows[0];
+
+        // 2. Compare incoming current password input with the hashed DB entry using bcryptjs
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: "Incorrect current password." });
+        }
+
+        // 3. Hash the new password safely
+        const salt = await bcrypt.genSalt(10);
+        const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+
+        // 4. Update the record column in the database
+        await pool.query(
+            'UPDATE users SET password = $1 WHERE userid = $2',
+            [hashedNewPassword, userId]
+        );
+
+        res.status(200).json({ message: "Password updated successfully." });
+
+    } catch (err) {
+        console.error("❌ Password Reset Error:", err.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
 });
 
 //Get All Users
@@ -181,6 +238,71 @@ router.get('/roles', async (req, res) => {
   }
 });
 
+router.get('/tasks/export-excel', async (req, res) => {
+  try {
+    // 1. Run the query using your imported connection pool
+    const queryText = 'SELECT t.*, s.status_name FROM tasks t JOIN status s ON t.status_id = s.status_id';
+    const result = await pool.query(queryText); 
+    
+    // 2. Extract rows from the pg Result object
+    const tasks = result.rows; 
+
+    // 3. Initialize ExcelJS structure
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Masterlist');
+
+    // 4. Map columns directly to your database schema fields
+    worksheet.columns = [
+      { header: 'Task ID', key: 'task_id', width: 10 },
+      { header: 'Job Site', key: 'job_site', width: 30},
+      { header: 'Customer', key: 'customer', width: 30 },
+      { header: 'Load', key: 'loads', width: 15 }, 
+      { header: 'Material Type', key: 'material', width: 30 },
+      { header: 'Trucker', key: 'trucker', width: 20 },
+      { header: 'Dump Facility', key: 'dump_facility', width: 25 },
+      { header: 'Created At', key: 'created_at', width: 20 },
+      { header: 'Scheduled Date', key: 'schedule_date', width: 20 }, 
+      { header: 'Completed Date', key: 'completed_date', width: 20 },
+      { header: 'Actual Loads', key: 'actual_loads', width: 15 },
+      { header: 'Dump Facility Invoice', key: 'dump_facility_invoice', width: 25 },
+      { header: 'Yess Invoice', key: 'invoice', width: 20 }, 
+      { header: 'Status', key: 'status_name', width: 20 },
+      { header: 'Remarks', key: 'remarks', width: 40 } 
+    ];
+
+    // 5. Cleanly format timestamp fields for clean cell rendering
+    const formattedRows = tasks.map(task => ({
+      ...task,
+      created_at: task.created_at ? new Date(task.created_at).toLocaleDateString() : '',
+      schedule_date: task.schedule_date ? new Date(task.schedule_date).toLocaleDateString() : '',
+      completed_date: task.completed_date ? new Date(task.completed_date).toLocaleDateString() : 'N/A'
+    }));
+
+    // 6. Push rows into spreadsheet layout instance
+    worksheet.addRows(formattedRows);
+
+    // 7. Styling header cells (#2D3E50 layout background color)
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '2D3E50' }
+    };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    // 8. Output headers and stream write response chunks
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=Masterlist.xlsx');
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('❌ Excel Export Error Details:', error);
+    res.status(500).send('Export failed');
+  }
+});
+
 //Get Status for Dropdown
 router.get('/statuses', async (req, res) => {
   try {
@@ -198,8 +320,12 @@ router.post('/login', async (req, res) => {
         const userExists = await pool.query("SELECT u.*,r.role_name FROM users u LEFT JOIN roles r ON u.role_id = r.role_id WHERE u.username = $1", [username]);
 
         if(userExists.rows.length === 1){
+            const user = userExists.rows[0];
             const isMatch = await bcrypt.compare(password, userExists.rows[0].password);
             if(isMatch){
+                if (user.isactive === false) {
+                    return res.status(403).json({ error: "Your account has been deactivated. Please contact an administrator." });
+                }
                 const token = generateToken(userExists.rows[0].userid);
                 res.cookie('yess_session', token, cookieOptions);
                 res.json({ message: "Login successful", user: userExists.rows[0] });
@@ -332,6 +458,9 @@ router.get('/stats', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+
+
+
 
 // GET a specific task by ID
 router.get('/tasks/:id', async (req, res) => {
@@ -500,5 +629,7 @@ router.put('/requests/:id', async (req, res) => {
         res.status(500).json({ error: "Failed to update data records." });
     }
 });
+
+
 
 export default router;

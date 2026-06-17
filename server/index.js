@@ -5,6 +5,7 @@ import cors from "cors";
 import authRoutes from './routes/auth.js'; // Ensure the .js extension is here
 import cookieParser from 'cookie-parser';
 import qboRoutes from './routes/qbo.js';
+//import masterlistRouter from './routes/masterlist.js';
 
 
 const app = express();
@@ -49,6 +50,7 @@ app.use(cors({
 // Auth Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/qbo', qboRoutes);
+//app.use('/api/masterlist', masterlistRouter);
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(`Server on ${PORT}`));
