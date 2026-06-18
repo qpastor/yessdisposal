@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import api from '@/api';
 
 function Sidebar({ user }) {
   const navigate = useNavigate();
@@ -32,13 +33,7 @@ function Sidebar({ user }) {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Sends the cookie to the server to be cleared
-      });
+      const response = await api.post('/api/auth/logout');
 
       if (response.ok) {
         navigate('/login'); // Redirect to login page
