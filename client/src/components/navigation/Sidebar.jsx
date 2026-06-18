@@ -33,7 +33,7 @@ function Sidebar({ user }) {
 
   const handleLogout = async () => {
     try {
-      const response = await api.post('/logout');
+      const response = await api.post('/api/auth/logout');
 
       if (response.status === 200) {
         navigate('/login'); // Redirect to login page
@@ -53,7 +53,7 @@ const handlePasswordReset = async (e) => {
   setIsUpdating(true);
   try {
     // Swap fetch for your configured Axios instance
-    const response = await api.put('/change-password', {
+    const response = await api.put('/api/auth/change-password', {
       currentPassword: passwordForm.currentPassword,
       newPassword: passwordForm.newPassword,
     });
