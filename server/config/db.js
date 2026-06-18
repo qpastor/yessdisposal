@@ -11,7 +11,7 @@ const { Pool } = pkg;
 const connectionTuning = {
   max: 10,                   // Maximum pool clients allowed
   idleTimeoutMillis: 30000,  // Discard inactive sockets after 30 seconds
-  connectionTimeoutMillis: 2000, // Fail fast if connection drops
+  connectionTimeoutMillis: 5000, // Fail fast if connection drops
   keepAlive: true            // Send heartbeat packets to prevent firewall timeouts
 };
 

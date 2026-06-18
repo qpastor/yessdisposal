@@ -39,6 +39,27 @@ const quoteFormLimiter = rateLimit({
     legacyHeaders: false,  // Disables X-RateLimit-* headers
 });
 
+router.get('/healthcheck', async (req, res) => {
+    try {
+        // Run a tiny, near-instant query to keep the database connection pool alive
+        await pool.query('SELECT 1;');
+        
+        res.status(200).json({
+            status: 'success',
+            message: 'Server and Database are active',
+            timestamp: new Date()
+        });
+    } catch (err) {
+        console.error('Healthcheck failed:', err.message);
+        
+        // Return 500 if DB is down so UptimeRobot knows there is an issue
+        res.status(500).json({
+            status: 'error',
+            message: 'Database connection failed'
+        });
+    }
+});
+
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { 
         expiresIn: '30d'
@@ -88,8 +109,8 @@ router.post('/user-register', protect, adminOnly, async (req, res) => {
             "INSERT INTO users (username, name, email ,password, role_id) VALUES($1, $2, $3, $4, $5) RETURNING *",
             [username, name, email, hashedPassword, role_id]
         );
-        const token = generateToken(newUser.rows[0].userid);
-        res.cookie('yess_session', token, cookieOptions);
+        // const token = generateToken(newUser.rows[0].userid);
+        // res.cookie('yess_session', token, cookieOptions);
         res.json(newUser.rows[0]);
     } catch(err){
         console.error(err.message);
@@ -342,9 +363,17 @@ router.post('/login', async (req, res) => {
 });
 
 // Logout Route
+// router.post('/logout', (req, res) => {
+//     res.cookie('yess_session', '', {
+//         ...cookieOptions,
+//         expires: new Date(0), 
+//     });
+//     res.status(200).json({ message: "Logged out successfully" });
+// });
 router.post('/logout', (req, res) => {
+    const { maxAge, ...logoutOptions } = cookieOptions; // Remove maxAge
     res.cookie('yess_session', '', {
-        ...cookieOptions,
+        ...logoutOptions,
         expires: new Date(0), 
     });
     res.status(200).json({ message: "Logged out successfully" });
