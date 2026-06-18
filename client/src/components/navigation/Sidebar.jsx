@@ -33,9 +33,9 @@ function Sidebar({ user }) {
 
   const handleLogout = async () => {
     try {
-      const response = await api.post('/api/auth/logout');
+      const response = await api.post('/logout');
 
-      if (response.ok) {
+      if (response.status === 200) {
         navigate('/login'); // Redirect to login page
       }
     } catch (error) {
@@ -43,45 +43,34 @@ function Sidebar({ user }) {
     }
   };
 
-  const handlePasswordReset = async (e) => {
-    e.preventDefault();
-    
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      return toast.error("New passwords do not match.");
-    }
+const handlePasswordReset = async (e) => {
+  e.preventDefault();
+  
+  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    return toast.error("New passwords do not match.");
+  }
 
-    setIsUpdating(true);
-    try {
-      const response = await fetch('http://localhost:5001/api/auth/change-password', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // If your auth session uses credentials/cookies, keep this line. 
-        // If it relies on a localStorage JWT token, replace with: 'Authorization': `Bearer ${localStorage.getItem('token')}`
-        credentials: 'include', 
-        body: JSON.stringify({
-          currentPassword: passwordForm.currentPassword,
-          newPassword: passwordForm.newPassword,
-        }),
-      });
+  setIsUpdating(true);
+  try {
+    // Swap fetch for your configured Axios instance
+    const response = await api.put('/change-password', {
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword,
+    });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success("Password updated successfully!");
-        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        setIsModalOpen(false); // Close modal on success
-      } else {
-        toast.error(data.error || "Failed to update password.");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Could not connect to the server.");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
+    // Axios puts data directly on response.data
+    toast.success("Password updated successfully!");
+    setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    setIsModalOpen(false); 
+  } catch (err) {
+    console.error(err);
+    // Axios errors place the server response inside err.response
+    const errorMsg = err.response?.data?.error || "Could not connect to the server.";
+    toast.error(errorMsg);
+  } finally {
+    setIsUpdating(false);
+  }
+};
 
   return (
     <div className={styles.sidebar}>
