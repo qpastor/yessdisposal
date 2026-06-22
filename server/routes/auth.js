@@ -39,7 +39,7 @@ const quoteFormLimiter = rateLimit({
     legacyHeaders: false,  // Disables X-RateLimit-* headers
 });
 
-router.get('/healthcheck', async (req, res) => {
+router.all('/healthcheck', async (req, res) => {
     try {
         // Run a tiny, near-instant query to keep the database connection pool alive
         await pool.query('SELECT 1;');
@@ -59,6 +59,8 @@ router.get('/healthcheck', async (req, res) => {
         });
     }
 });
+
+
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { 
