@@ -42,7 +42,8 @@ const quoteFormLimiter = rateLimit({
 router.all('/healthcheck', async (req, res) => {
     try {
         // Run a tiny, near-instant query to keep the database connection pool alive
-        await pool.query('SELECT 1;');
+        client = await pool.connect();
+        await client.query('SELECT 1;');
         
         res.status(200).json({
             status: 'success',
@@ -57,6 +58,8 @@ router.all('/healthcheck', async (req, res) => {
             status: 'error',
             message: 'Database connection failed'
         });
+    } finally{
+        if (client) client.release(); // Release the client back to the pool
     }
 });
 
