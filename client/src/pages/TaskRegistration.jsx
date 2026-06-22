@@ -43,10 +43,9 @@ import instance from '../api';
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const payload = {
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const payload = {
     ...formData,
     // Required number: ensure it's a number, default to 0 if empty
     loads: formData.loads === "" ? 0 : Number(formData.loads),
@@ -59,25 +58,57 @@ import instance from '../api';
     dump_facility: formData.dumpFacility
   };
 
-    try {
-      const response = await fetch('http://localhost:5001/api/auth/task-register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload),
-      });
+  try {
+    // UPDATED: Using your custom instance to hit the relative endpoint
+    // (Assuming your instance has credentials: 'include' or withCredentials: true built-in)
+    const response = await instance.post('/api/auth/task-register', payload);
 
-      if (response.ok) {
-        alert('Task created successfully!');
-        navigate('/master-list');
-      } else {
-        const data = await response.json();
-        alert(`Error: ${data.error || 'Failed to create task'}`);
-      }
-    } catch (err) {
-      alert('Could not connect to the server.');
+    // If using Axios (instance.post returns the response object on success)
+    if (response.status === 200 || response.status === 201) {
+      alert('Task created successfully!');
+      navigate('/master-list');
     }
-  };
+  } catch (err) {
+    // If using Axios, errors are caught here automatically for non-2xx responses
+    const errorMessage = err.response?.data?.error || 'Failed to create task';
+    alert(`Error: ${errorMessage}`);
+  }
+};
+
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   const payload = {
+  //   ...formData,
+  //   // Required number: ensure it's a number, default to 0 if empty
+  //   loads: formData.loads === "" ? 0 : Number(formData.loads),
+    
+  //   // Optional number: send null if empty, otherwise PostgreSQL will crash on ""
+  //   actual_loads: formData.actual_loads === "" ? 0 : Number(formData.actual_loads),
+    
+  //   // Mapping camelCase React state to snake_case Backend expectations
+  //   job_site: formData.jobSite,
+  //   dump_facility: formData.dumpFacility
+  // };
+
+  //   try {
+  //     const response = await fetch('http://localhost:5001/api/auth/task-register', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       credentials: 'include',
+  //       body: JSON.stringify(payload),
+  //     });
+
+  //     if (response.ok) {
+  //       alert('Task created successfully!');
+  //       navigate('/master-list');
+  //     } else {
+  //       const data = await response.json();
+  //       alert(`Error: ${data.error || 'Failed to create task'}`);
+  //     }
+  //   } catch (err) {
+  //     alert('Could not connect to the server.');
+  //   }
+  // };
 
   return (
     <>

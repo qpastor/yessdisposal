@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import instance from '../api';
 
 export default function Contact() {
   const [form, setForm] = useState({ fullname: '', email: '', phone: '', project_details: '' });
@@ -29,50 +30,29 @@ export default function Contact() {
   }, [isLockedOut]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (isLockedOut) return;
-    setSending(true);
+  e.preventDefault();
+  if (isLockedOut) return;
+  setSending(true);
 
   try {
-    const response = await fetch('http://localhost:5001/api/auth/request-sent', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      // Ensure these keys match what your backend expects
-      body: JSON.stringify({
-        fullname: form.fullname, // Mapping 'name' from state to 'fullname' for DB
-        email: form.email,
-        phone: form.phone,
-        project_details: form.project_details, // Mapping 'message' to 'project_details'
-      }),
+    // UPDATED: Using custom instance with clean, non-stringified payload
+    const response = await instance.post('/api/auth/request-sent', {
+      fullname: form.fullname,        // Mapping 'name' from state to 'fullname' for DB
+      email: form.email,
+      phone: form.phone,
+      project_details: form.project_details, // Mapping 'message' to 'project_details'
     });
 
-    const data = await response.json();
-
-    if (response.ok) {
-      toast.success("Message sent! We'll get back to you shortly.");
-      // Reset form to initial state
-      setForm({ fullname: '', email: '', phone: '', project_details: '' });
-    } 
-    else {
-        // --- RATE LIMITING & ERROR HANDLING UPDATED HERE ---
-        if (response.status === 429) {
-          // Grabs the exact message string sent by your express-rate-limit backend middleware
-          toast.error(data.message || "You're sending messages too fast. Please wait a few minutes.");
-          setIsLockedOut(true);
-        } else {
-      toast.error(data.error || 'Something went wrong. Please try again.');
-     }
-   }
+    if (response.status === 200 || response.status === 201) {
+      // Add your success logic here (e.g., alert, clear form, setSending(false))
+    }
   } catch (err) {
-    console.error('Submission Error:', err);
-    toast.error('Could not connect to the server.');
-    
+    const errorMessage = err.response?.data?.error || 'Failed to send request';
+    alert(`Error: ${errorMessage}`);
   } finally {
-    setSending(false);
+    setSending(false); // Make sure to unlock the sending state whether it succeeds or fails!
   }
-  };
+};
 
   const contactInfo = [
     { icon: MapPin, label: 'Location', value: '144-02 Jewel Ave, Flushing, NY 11367' },

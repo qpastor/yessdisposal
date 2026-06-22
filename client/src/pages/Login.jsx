@@ -26,7 +26,7 @@ export default function Login({ onLogin }) {
   };
 }, []);
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null); // Clear previous errors on a new attempt
     const loginData = { username, password };
