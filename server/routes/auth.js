@@ -41,9 +41,8 @@ const quoteFormLimiter = rateLimit({
 
 router.all('/healthcheck', async (req, res) => {
     try {
-        // Run a tiny, near-instant query to keep the database connection pool alive
-        client = await pool.connect();
-        await client.query('SELECT 1;');
+        // Keeps the pool warm safely using the direct pool interface
+        await pool.query('SELECT 1;');
         
         res.status(200).json({
             status: 'success',
@@ -52,18 +51,13 @@ router.all('/healthcheck', async (req, res) => {
         });
     } catch (err) {
         console.error('Healthcheck failed:', err.message);
-        
-        // Return 500 if DB is down so UptimeRobot knows there is an issue
-        res.status(500).json({
+            res.status(500).json({
             status: 'error',
-            message: 'Database connection failed'
+            message: 'Database connection failed',
+            details: err.message
         });
-    } finally{
-        if (client) client.release(); // Release the client back to the pool
     }
 });
-
-
 
 const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { 
