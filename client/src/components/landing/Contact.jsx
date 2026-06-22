@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import instance from '../api';
+import instance from '../../api';
 
 export default function Contact() {
   const [form, setForm] = useState({ fullname: '', email: '', phone: '', project_details: '' });
