@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import api from '@/api';
+import instance from '@/api';
 
 function Sidebar({ user }) {
   const navigate = useNavigate();
@@ -31,17 +32,30 @@ function Sidebar({ user }) {
 
   const showSubnav = () => setSubnav(!subnav);
 
+  //   try {
+  //     const response = await api.post('/api/auth/logout');
+
+  //     if (response.status === 200) {
+  //       navigate('/login'); // Redirect to login page
+  //     }
+  //   } catch (error) {
+  //     console.error("Logout failed:", error);
+  //   }
+  // };
+
   const handleLogout = async () => {
     try {
-      const response = await api.post('/api/auth/logout');
-
-      if (response.status === 200) {
-        navigate('/login'); // Redirect to login page
-      }
-    } catch (error) {
-      console.error("Logout failed:", error);
+        await instance.post('/api/auth/logout');
+    } catch (err) {
+        console.error("Logout request failed", err);
+    } finally {
+        // ALWAYS clear the token from storage on logout
+        localStorage.removeItem('token');
+  
+        navigate('/login'); 
+        // then clear your global user state and redirect...
     }
-  };
+};
 
 const handlePasswordReset = async (e) => {
   e.preventDefault();

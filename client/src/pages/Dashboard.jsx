@@ -61,6 +61,14 @@ const Dashboard = () => {
   overdue: 0
 });
 
+useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // Replaces history tracking point to ensure they cannot press 'Back' to return here
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
+
 const fetchQBOData = useCallback(() => {
   console.log("Fetching/Refreshing QBO data...");
   const baseUrl = import.meta.env.VITE_API_URL; // || 'http://localhost:5001';
