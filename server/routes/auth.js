@@ -10,23 +10,23 @@ const router = express.Router();
 const isProduction = process.env.NODE_ENV === 'production';
 
 // // PRODUCTION SETUP
-// const cookieOptions = {
-//     httpOnly: true,
-//     secure: true, // Set to true in production
-//     sameSite: 'none',
-//     maxAge: 24 * 60 * 60 * 1000,
-//     path: '/',
-// };
-
-// DEVELOPMENTE SETUP
 const cookieOptions = {
     httpOnly: true,
-    secure: isProduction, // Set to true in production
-    sameSite: isProduction ? 'none' : 'lax', 
+    secure: true, // Set to true in production
+    sameSite: 'none',
     maxAge: 24 * 60 * 60 * 1000,
     path: '/',
-    domain: isProduction ? '.yessdisposal.com' : 'localhost'
 };
+
+// DEVELOPMENTE SETUP
+// const cookieOptions = {
+//     httpOnly: true,
+//     secure: isProduction, // Set to true in production
+//     sameSite: isProduction ? 'none' : 'lax', 
+//     maxAge: 24 * 60 * 60 * 1000,
+//     path: '/',
+//     domain: isProduction ? '.yessdisposal.com' : 'localhost'
+// };
 
 const quoteFormLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15-minute window
@@ -109,8 +109,7 @@ router.post('/user-register', protect, adminOnly, async (req, res) => {
             "INSERT INTO users (username, name, email ,password, role_id) VALUES($1, $2, $3, $4, $5) RETURNING *",
             [username, name, email, hashedPassword, role_id]
         );
-        // const token = generateToken(newUser.rows[0].userid);
-        // res.cookie('yess_session', token, cookieOptions);
+
         res.json(newUser.rows[0]);
     } catch(err){
         console.error(err.message);
@@ -340,36 +339,39 @@ router.post('/login', async (req, res) => {
     try {
         const userExists = await pool.query("SELECT u.*,r.role_name FROM users u LEFT JOIN roles r ON u.role_id = r.role_id WHERE u.username = $1", [username]);
 
-        if(userExists.rows.length === 1){
+        if (userExists.rows.length === 1) {
             const user = userExists.rows[0];
-            const isMatch = await bcrypt.compare(password, userExists.rows[0].password);
-            if(isMatch){
+            const isMatch = await bcrypt.compare(password, user.password);
+            
+            if (isMatch) {
                 if (user.isactive === false) {
                     return res.status(403).json({ error: "Your account has been deactivated. Please contact an administrator." });
                 }
-                const token = generateToken(userExists.rows[0].userid);
-                res.cookie('yess_session', token, cookieOptions);
-                res.json({ message: "Login successful", user: userExists.rows[0] });
+                
+                // 1. Generate the token
+                const token = generateToken(user.userid);
+                
+                // 2. Send successful response with token
+                return res.json({ 
+                    message: "Login successful", 
+                    user: user,
+                    token: token 
+                });
             } else {
-                res.status(401).json({ error: "Invalid credentials" });
+                // 🌟 FIX 1: This handles when username matches but password is WRONG
+                return res.status(401).json({ error: "Incorrect username or password." });
             }
         } else {
-            res.status(401).json({ error: "Invalid credentials" });
+            // This handles when username does NOT exist in DB
+            return res.status(401).json({ error: "Incorrect username or password." });
         }
-    } catch(err){
+    } catch (err) {
         console.error(err.message);
-        res.status(500).json({ error: "Internal Server Error" });
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 });
 
-// Logout Route
-// router.post('/logout', (req, res) => {
-//     res.cookie('yess_session', '', {
-//         ...cookieOptions,
-//         expires: new Date(0), 
-//     });
-//     res.status(200).json({ message: "Logged out successfully" });
-// });
+
 router.post('/logout', (req, res) => {
     const { maxAge, ...logoutOptions } = cookieOptions; // Remove maxAge
     res.cookie('yess_session', '', {
