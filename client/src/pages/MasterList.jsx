@@ -62,13 +62,35 @@ export default function UserTable({ user }) {
   );
 });
 
-const handleExportExcel = () => {
-  // Use window.open or an invisible anchor element pointing directly to your new route
-  // This automatically passes along session tokens if your Axios instance uses cookies/sessions.
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001';
-  const exportUrl = `${baseUrl}/api/auth/tasks/export-excel`;
-  
-  window.open(exportUrl, '_blank');
+const handleExportExcel = async () => {
+  try {
+    // 1. Make an authenticated request using your configured Axios instance
+    // Note: Adjusted path to match your fetch syntax '/api/auth/tasks' + '/export-excel'
+    const response = await instance.get('/api/auth/tasks/export-excel', {
+      responseType: 'blob', // Crucial for binary data streaming
+    });
+
+    // 2. Create a local URL pointing to the binary blob data
+    const blob = new Blob([response.data], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    const downloadUrl = window.URL.createObjectURL(blob);
+
+    // 3. Programmatically click a hidden anchor element to initiate download
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.setAttribute('download', 'Masterlist.xlsx'); // Filename for the browser
+    document.body.appendChild(link);
+    link.click();
+
+    // 4. Clean up the URL object out of memory
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+
+  } catch (err) {
+    console.error("Excel Export Error:", err);
+    alert("Failed to export Excel file. Please try again.");
+  }
 };
 
   const deleteTask = async (id) => {

@@ -42,6 +42,37 @@ export default function UserTable({ user }) {
     setCurrentPage(1);
   }, [searchQuery]);
 
+  const handleExportExcel = async () => {
+  try {
+    // 1. Make an authenticated request using your configured Axios instance
+    // Note: Adjusted path to match your fetch syntax '/api/auth/tasks' + '/export-excel'
+    const response = await instance.get('/api/auth/users/export-excel', {
+      responseType: 'blob', // Crucial for binary data streaming
+    });
+
+    // 2. Create a local URL pointing to the binary blob data
+    const blob = new Blob([response.data], { 
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    });
+    const downloadUrl = window.URL.createObjectURL(blob);
+
+    // 3. Programmatically click a hidden anchor element to initiate download
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.setAttribute('download', 'Yess-Users-List.xlsx'); // Filename for the browser
+    document.body.appendChild(link);
+    link.click();
+
+    // 4. Clean up the URL object out of memory
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+
+  } catch (err) {
+    console.error("Excel Export Error:", err);
+    alert("Failed to export Excel file. Please try again.");
+  }
+};
+
   // --- Automatic Search Logic ---
   const filteredUsers = users.filter((u) => {
     if (!searchQuery) return true;
@@ -120,7 +151,9 @@ export default function UserTable({ user }) {
             <div className="flex items-center gap-3">
               {!isViewOnly&& (
                 <>
-              <button className="flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium hover:bg-gray-50 text-gray-600">
+              <button 
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium hover:bg-gray-50 text-gray-600">
                 <Download className="w-4 h-4" /> Export
               </button>
               
