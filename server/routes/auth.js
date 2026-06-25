@@ -161,104 +161,7 @@ router.put('/change-password', protect, async (req, res) => {
     }
 });
 
-//Get All Users
-router.get('/users', async (req, res) => {
-    try {
-        const queryText = `
-            SELECT 
-                u.userid, 
-                u.name, 
-                u.username, 
-                u.email, 
-                u.isactive, 
-                r.role_name 
-            FROM users u 
-            LEFT JOIN roles r ON u.role_id = r.role_id
-        `;
-        
-        const result = await pool.query(queryText);
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: "Internal Server Error" });
-    }
-});
-
-//Get Specific Users
-router.get('/users/:userid', async (req, res) => {
-    try {
-        const { userid } = req.params;
-        const queryText = `
-            SELECT 
-                u.userid, 
-                u.name, 
-                u.username, 
-                u.email, 
-                u.isactive,
-                u.role_id,
-                r.role_name 
-            FROM users u 
-            LEFT JOIN roles r ON u.role_id = r.role_id
-            WHERE u.userid = $1
-        `;
-
-        const result = await pool.query(queryText, [userid]);
-        // Check if a user was actually found
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        // Return the first object instead of the whole array for a single user fetch
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: "Internal Server Error" });
-    }
-});
-
-//Update User
-router.put('/users/:userid', protect, adminOnly, async (req, res) => {
-    try {
-        const { userid } = req.params;
-        const { name, username, email, isactive, role_id } = req.body;
-        const cleanRoleId = role_id ? parseInt(role_id) : null;
-        const finalIsActive = isactive === true || isactive === 'true' || isactive === 1;
-
-        const updateResult = await pool.query(
-            "UPDATE users SET name = $1, username = $2, email = $3, isactive = $4, role_id = $5 WHERE userid = $6 RETURNING *",
-            [name, username, email, finalIsActive, cleanRoleId, parseInt(userid)]
-        );
-
-        if (updateResult.rows.length === 0) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        const fullUserQuery = `
-            SELECT u.userid, u.name, u.username, u.email, u.isactive, u.role_id, r.role_name 
-            FROM users u
-            LEFT JOIN roles r ON u.role_id = r.role_id
-            WHERE u.userid = $1
-        `;
-        const finalResult = await pool.query(fullUserQuery, [userid]);
-
-        res.json(finalResult.rows[0]);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).json({ error: "Internal Server Error" });
-    }
-});
-
-//Get Roles for Dropdown
-router.get('/roles', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT role_id, role_name FROM roles ORDER BY role_name ASC');
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).send("Server Error");
-  }
-});
-
-router.get('/tasks/export-excel', async (req, res) => {
+router.get('/tasks/export-excel', protect, adminOnly, async (req, res) => {
   try {
     // 1. Run the query using your imported connection pool
     const queryText = 'SELECT t.*, s.status_name FROM tasks t JOIN status s ON t.status_id = s.status_id';
@@ -323,6 +226,111 @@ router.get('/tasks/export-excel', async (req, res) => {
   }
 });
 
+//Get Users for Export
+router.get('/users/export-excel', protect, adminOnly,async (req, res) => {
+  try {
+    // 1. Fetch user data (Adjust table/column names to match your DB schema)
+    const queryText = `
+      SELECT 
+        u.userid, 
+        u.name,
+        u.username,
+        u.email, 
+        r.role_name,
+        u.isactive 
+      FROM users u 
+      LEFT JOIN roles r ON u.role_id = r.role_id
+      ORDER BY u.userid ASC
+    `;
+    const result = await pool.query(queryText); 
+    const users = result.rows; 
+
+    // 2. Initialize ExcelJS Workbook
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Users List');
+
+    // 3. Define Columns
+    worksheet.columns = [
+      { header: 'User ID', key: 'userid', width: 10 },
+      { header: 'Name', key: 'name', width: 20 },
+      { header: 'Username', key: 'username', width: 20 },
+      { header: 'Email Address', key: 'email', width: 30 },
+      { header: 'Role', key: 'role_name', width: 20 },
+      { header: 'Status', key: 'status_label', width: 15 }
+    ];
+
+    // 4. Format rows safely before inserting
+    const formattedRows = users.map(user => ({
+      ...user,
+      // Map boolean or flag status to human-readable strings
+      status_label: user.isactive ? 'Active' : 'Inactive'
+    }));
+
+    // 5. Add rows to worksheet
+    worksheet.addRows(formattedRows);
+
+    // 6. Style Headers (#2D3E50 to match your UI layout)
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '2D3E50' }
+    };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+    // 7. Set HTTP response headers for Excel streaming
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=Yess-Users-List.xlsx');
+
+    // 8. Stream the workbook directly into the response object
+    return await workbook.xlsx.write(res);
+
+  } catch (error) {
+    console.error('❌ User Excel Export Error Details:', error);
+    
+    // Safety check: Don't try to send response if headers have already fired
+    if (!res.headersSent) {
+      res.status(500).send('Export failed');
+    }
+  }
+});
+
+//Get All Users
+router.get('/users', protect, adminOnly, async (req, res) => {
+    try {
+        const queryText = `
+            SELECT 
+                u.userid, 
+                u.name, 
+                u.username, 
+                u.email, 
+                u.isactive, 
+                r.role_name 
+            FROM users u 
+            LEFT JOIN roles r ON u.role_id = r.role_id
+        `;
+        
+        const result = await pool.query(queryText);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+//Get Roles for Dropdown
+router.get('/roles', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT role_id, role_name FROM roles ORDER BY role_name ASC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).send("Server Error");
+  }
+});
+
+
+
 //Get Status for Dropdown
 router.get('/statuses', async (req, res) => {
   try {
@@ -332,6 +340,71 @@ router.get('/statuses', async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+
+//Get Specific Users
+router.get('/users/:userid', protect,async (req, res) => {
+    try {
+        const { userid } = req.params;
+        const queryText = `
+            SELECT 
+                u.userid, 
+                u.name, 
+                u.username, 
+                u.email, 
+                u.isactive,
+                u.role_id,
+                r.role_name 
+            FROM users u 
+            LEFT JOIN roles r ON u.role_id = r.role_id
+            WHERE u.userid = $1
+        `;
+
+        const result = await pool.query(queryText, [userid]);
+        // Check if a user was actually found
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Return the first object instead of the whole array for a single user fetch
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+//Update User
+router.put('/users/:userid', protect, adminOnly, async (req, res) => {
+    try {
+        const { userid } = req.params;
+        const { name, username, email, isactive, role_id } = req.body;
+        const cleanRoleId = role_id ? parseInt(role_id) : null;
+        const finalIsActive = isactive === true || isactive === 'true' || isactive === 1;
+
+        const updateResult = await pool.query(
+            "UPDATE users SET name = $1, username = $2, email = $3, isactive = $4, role_id = $5 WHERE userid = $6 RETURNING *",
+            [name, username, email, finalIsActive, cleanRoleId, parseInt(userid)]
+        );
+
+        if (updateResult.rows.length === 0) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const fullUserQuery = `
+            SELECT u.userid, u.name, u.username, u.email, u.isactive, u.role_id, r.role_name 
+            FROM users u
+            LEFT JOIN roles r ON u.role_id = r.role_id
+            WHERE u.userid = $1
+        `;
+        const finalResult = await pool.query(fullUserQuery, [userid]);
+
+        res.json(finalResult.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
 
 // Login
 router.post('/login', async (req, res) => {
