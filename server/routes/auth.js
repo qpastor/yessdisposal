@@ -603,8 +603,34 @@ router.get('/stats', async (req, res) => {
   }
 });
 
+// Get all Missing Invoice for Dashboard
+router.get('/missing-invoices', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        COUNT(CASE WHEN t.invoice IS NULL OR t.invoice = '' THEN 1 END) AS no_invoice,
+        COUNT(CASE WHEN t.dump_facility_invoice IS NULL OR t.dump_facility_invoice = '' THEN 1 END) AS no_dump,
+        COUNT(CASE WHEN t.trucker_invoice IS NULL OR t.trucker_invoice = '' THEN 1 END) AS no_trucker
+      FROM tasks t
+    `;
+    
+    // PostgreSQL uses result.rows, do not destructure with [result]
+    const result = await pool.query(query); 
+    const row = result.rows[0] || { no_invoice: 0, no_dump: 0, no_trucker: 0 };
 
+    // Formatted perfectly to match your exact front-end property keys!
+    const formattedStats = {
+      no_invoice_count: Number(row.no_invoice),
+      no_dump_facility_invoice_count: Number(row.no_dump),
+      no_trucker_invoice_count: Number(row.no_trucker)
+    };
 
+    res.json(formattedStats);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 // GET a specific task by ID
 router.get('/tasks/:id', async (req, res) => {
