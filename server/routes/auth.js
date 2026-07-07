@@ -98,21 +98,32 @@ router.post('/request-sent', quoteFormLimiter, async (req, res) => {
 router.post('/user-register', protect, adminOnly, async (req, res) => {
     const { username, name, email, password, role_id } = req.body;
     try {
-        const userExists = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+        // 👇 Check both username OR email fields
+        const userExists = await pool.query(
+            "SELECT * FROM users WHERE username = $1 OR email = $2", 
+            [username, email]
+        );
 
         if(userExists.rows.length > 0){
-            return res.status(400).json({ error: "user already exists" });
+            const existingUser = userExists.rows[0];
+            if (existingUser.username === username) {
+                return res.status(400).json({ error: "Username already taken" });
+            }
+            if (existingUser.email === email) {
+                return res.status(400).json({ error: "Email already registered" });
+            }
         }
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         const newUser = await pool.query(
-            "INSERT INTO users (username, name, email ,password, role_id) VALUES($1, $2, $3, $4, $5) RETURNING *",
+            "INSERT INTO users (username, name, email, password, role_id) VALUES($1, $2, $3, $4, $5) RETURNING *",
             [username, name, email, hashedPassword, role_id]
         );
 
         res.json(newUser.rows[0]);
     } catch(err){
-        console.error(err.message);
+        console.error("Registration Error Log:", err.message);
         res.status(500).json({ error: "Internal Server Error" });
     }  
 });
@@ -462,30 +473,57 @@ router.post('/task-register', protect, adminOnly, async (req, res) => {
             status_id,
             job_site, 
             customer, 
-            loads, 
             material, 
             trucker, 
             dump_facility,
             schedule_date,
             invoice,
-            actual_loads,
             trucker_invoice,
             dump_facility_invoice,
             remarks
         } = req.body;
-        // 2. Insert into the database
+
+        // 2. Map empty strings ("") safely to null values for the database 
+        const parsedLoads = req.body.loads === "" || req.body.loads === undefined ? null : req.body.loads;
+        const parsedActualLoads = req.body.actual_loads === "" || req.body.actual_loads === undefined ? null : req.body.actual_loads;
+        const parsedCompletedDate = req.body.completed_date === "" || req.body.completed_date === undefined ? null : req.body.completed_date;
+        
+        const parsedRemarks = remarks === "" ? null : remarks;
+        const parsedInvoice = invoice === "" ? null : invoice;
+        const parsedTruckerInvoice = trucker_invoice === "" ? null : trucker_invoice;
+        const parsedDumpFacilityInvoice = dump_facility_invoice === "" ? null : dump_facility_invoice;
+
+        // 3. Insert into the database
         const newTask = await pool.query(
-            `INSERT INTO tasks (status_id, job_site, customer, loads, material, trucker, dump_facility, schedule_date, invoice, actual_loads, trucker_invoice, dump_facility_invoice, remarks, created_at) 
-             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW()) 
+            `INSERT INTO tasks (
+                status_id, job_site, customer, loads, material, trucker, 
+                dump_facility, schedule_date, invoice, actual_loads, 
+                trucker_invoice, dump_facility_invoice, remarks, completed_date, created_at
+             ) 
+             VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW()) 
              RETURNING *`,
-            [status_id, job_site, customer, loads, material, trucker, dump_facility, schedule_date, invoice, actual_loads, trucker_invoice, dump_facility_invoice, remarks]
+            [
+                status_id, 
+                job_site, 
+                customer, 
+                parsedLoads, 
+                material, 
+                trucker, 
+                dump_facility, 
+                schedule_date, 
+                parsedInvoice, 
+                parsedActualLoads, 
+                parsedTruckerInvoice, 
+                parsedDumpFacilityInvoice, 
+                parsedRemarks,
+                parsedCompletedDate
+            ]
         );
 
-        // 3. Return the newly created task
         res.status(201).json(newTask.rows[0]);
 
     } catch (err) {
-        console.error(err.message);
+        console.error("Backend Task registration error:", err.message);
         res.status(500).json({ error: "Internal Server Error" });
     }
 });
@@ -527,13 +565,15 @@ router.get('/tasks', protect, async (req, res) => {
         const totalCountResult = await pool.query(countQuery, countParams);
         const totalTasks = parseInt(totalCountResult.rows[0].count, 10);
 
+        const orderClause = ` ORDER BY t.schedule_date DESC`;
+
         // 2. ONLY apply LIMIT and OFFSET if pagination parameters were provided
         if (hasPagination) {
-            tasksQuery += ` ORDER BY t.created_at DESC LIMIT $${dataParams.length + 1} OFFSET $${dataParams.length + 2}`;
+            tasksQuery += orderClause + ` LIMIT $${dataParams.length + 1} OFFSET $${dataParams.length + 2}`;
             dataParams.push(limit, offset);
         } else {
             // MasterList or any client requesting everything gets all data sorted
-            tasksQuery += ` ORDER BY t.created_at DESC`;
+            tasksQuery += orderClause;
         }
 
         const allTasks = await pool.query(tasksQuery, dataParams);
@@ -646,6 +686,20 @@ router.put('/users/:id/disable', protect, adminOnly, async (req, res) => {
     }
 });
 
+router.put('/users/:id/enable', protect, adminOnly, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await pool.query(
+            "UPDATE users SET isactive = true WHERE userid = $1 RETURNING *",
+            [id]
+        );
+        if (user.rows.length === 0) return res.status(404).json({ error: "User not found" });
+        res.json(user.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
 // DELETE a specific task
 router.delete('/tasks/:id', protect, adminOnly,async (req, res) => {
     try {
@@ -733,7 +787,5 @@ router.put('/requests/:id', async (req, res) => {
         res.status(500).json({ error: "Failed to update data records." });
     }
 });
-
-
 
 export default router;
