@@ -10,14 +10,9 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import UserManagement from './pages/UserManagement';
-import UserRegistration from './pages/UserRegistration';
-import UserPage from './pages/UserPage';
 import MasterList from './pages/MasterList';
 import TaskList from './pages/TaskList';
-import TaskRegistration from './pages/TaskRegistration';
-import TaskPage from './pages/TaskPage';
 import RequestList from './pages/RequestList';
-import RequestPage from './pages/RequestPage';
 import PageNotFound from './lib/PageNotFound';
 
 
@@ -56,14 +51,9 @@ const [user, setUser] = useState(() => {
             <Route element={<Layout user={user} />}>
             <Route path="/dashboard" element={<Dashboard user={user} />} />
             <Route path="/user-management" element={<UserManagement user={user} />} />
-            <Route path="/user-registration" element={<UserRegistration user={user} />} />
-            <Route path="/user-details/:id" element={<UserPage user={user} />} />
             <Route path="/task" element={<TaskList user={user}/> } />
             <Route path="/master-list" element={<MasterList user={user} />} />
-            <Route path="/task-registration" element={<TaskRegistration user={user} />} />
-            <Route path="/task-details/:id" element={<TaskPage user={user} />} />
             <Route path="/request-list" element={<RequestList user={user} />} />
-            <Route path="/request-details/:id" element={<RequestPage user={user} />} />
           </Route>
             <Route path="*" element={<PageNotFound />} />
            </Routes>
