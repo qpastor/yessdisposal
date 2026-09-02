@@ -1,23 +1,19 @@
-import { Outlet, Navigate } from 'react-router-dom';
+//import { Outlet } from 'react-router-dom';
+// src/components/Layout.jsx
+import React from 'react';
 import Sidebar from './navigation/Sidebar'; // Adjust the path as needed
+import { Outlet } from 'react-router-dom';
 
-const Layout = ({ user }) => {
-  // Protect all child routes at once
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
+export default function Layout({ user }) {
   return (
-    <div className="flex min-h-screen bg-slate-50 overflow-hidden">
-      {/* Sidebar is rendered once and stays fixed */}
+    <div className="min-h-screen bg-gray-100">
+      {/* Fixed Sidebar on the left */}
       <Sidebar user={user} />
-      
-      {/* The main content area that swaps child pages */}
-      <main className="flex-1 ml-[250px] max-md:ml-[60px] transition-all duration-300 overflow-y-auto">
-        <Outlet /> 
+
+      {/* Add ml-64 (margin-left: 16rem / 256px) so content starts after the sidebar */}
+      <main className="ml-64 p-6 min-h-screen overflow-x-auto">
+        <Outlet />
       </main>
     </div>
   );
-};
-
-export default Layout;
+}

@@ -1,72 +1,88 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Search, UserPlus, Download, ChevronLeft, ChevronRight, Ban, Check
+  Search, UserPlus, Download, ChevronLeft, ChevronRight, Ban, Check, Loader2
 } from 'lucide-react'; 
-import instance from '../api'; // Import the configured Axios instance
+import instance from '../api';
 import Modal from '../components/ui/Modal';
 
 export default function UserManagement({ user }) {
   const [users, setUsers] = useState([]); 
+  const [roles, setRoles] = useState([]); 
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState('view');
   const [editForm, setEditForm] = useState({ name: '', username: '', email: '', role_id: '', password: '' });
 
-  // State for the Modal and Selected User
   const [selectedUser, setSelectedUser] = useState(null);
   const [modalNotification, setModalNotification] = useState({ type: '', message: '' });
   const [confirmAction, setConfirmAction] = useState({ isOpen: false, type: '', userId: null });
 
-  // --- Search and Pagination ---
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [recordsPerPage, setRecordsPerPage] = useState(10);
+  const [recordsPerPage] = useState(10);
 
-  // Check if the logged-in user is an Admin for feature gating
-  const isAdmin = user?.role_name === 'Admin';
-  const isViewOnly = user?.role_name === 'View Only';
+  const timerRef = useRef(null);
 
-  // --- Fetch Users from Backend ---
+  const isAdmin = user?.role === 'Admin' || user?.role_name === 'Admin' || Number(user?.role_id) === 1;
+  const isViewOnly = Number(user?.role_id) === 3 || user?.role_name === 'View Only';
+
+  const getUserId = (u) => u?.userid || u?.id;
+  const isUserActive = (u) => Boolean(u?.isactive ?? u?.is_active ?? u?.isActive);
+
+  const clearNotificationTimer = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  };
+
   const fetchUsers = async () => {
     try {
-      setLoading(true);
       const response = await instance.get('/api/auth/users');
-      setUsers(response.data); 
+      setUsers(response.data);
+      return response.data;
     } catch (err) {
       setError("Failed to fetch users");
       console.error(err);
-    } finally {
-      setLoading(false);
+      return [];
+    }
+  };
+
+  const fetchRoles = async () => {
+    try {
+      const response = await instance.get('/api/auth/roles');
+      setRoles(response.data);
+    } catch (err) {
+      console.error("Failed to fetch roles:", err);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
+    const loadInitialData = async () => {
+      setLoading(true);
+      await Promise.all([fetchUsers(), fetchRoles()]);
+      setLoading(false);
+    };
+    loadInitialData();
+
+    return () => clearNotificationTimer();
   }, []);
 
-  // Reset to page 1 automatically when user types in the search box
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
 
   const handleExportExcel = async () => {
     try {
-      const response = await instance.get('/api/auth/users/export-excel', {
-        responseType: 'blob', 
-      });
-
+      const response = await instance.get('/api/auth/users/export-excel', { responseType: 'blob' });
       const blob = new Blob([response.data], { 
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
       });
       const downloadUrl = window.URL.createObjectURL(blob);
-
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.setAttribute('download', 'Yess-Users-List.xlsx');
       document.body.appendChild(link);
       link.click();
-
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
     } catch (err) {
@@ -75,22 +91,18 @@ export default function UserManagement({ user }) {
     }
   };
 
-  // --- Automatic Search Logic ---
   const filteredUsers = users.filter((u) => {
     if (!searchQuery) return true;
-    
     const query = searchQuery.toLowerCase();
-    
     return (
       u.name?.toLowerCase().includes(query) ||
       u.email?.toLowerCase().includes(query) ||
       u.username?.toLowerCase().includes(query) ||
-      u.password?.toLowerCase().includes(query) ||
       u.role_name?.toLowerCase().includes(query)
     );
   });
 
-  const disableUser = async (id, e) => {
+  const disableUser = (id, e) => {
     if (e && e.stopPropagation) e.stopPropagation();
     setConfirmAction({ isOpen: true, type: 'disable', userId: id });
   };
@@ -102,173 +114,172 @@ export default function UserManagement({ user }) {
 
   const executeConfirmAction = async () => {
     const { type, userId } = confirmAction;
+    clearNotificationTimer();
+    setSubmitting(true);
     try {
       if (type === 'enable') {
-        await instance.put(`/api/auth/users/${userId}/enable`);
+        await instance.put(`/api/auth/users/enable/${userId}`, { userId });
         setModalNotification({ type: 'success', message: "User enabled successfully!" });
-        if (selectedUser && selectedUser.userid === userId) {
-        setSelectedUser(prev => ({ ...prev, isactive: true }));
-      }
       } else if (type === 'disable') {
-        await instance.put(`/api/auth/users/${userId}/disable`);
+        await instance.put(`/api/auth/users/disable/${userId}`, { userId });
         setModalNotification({ type: 'success', message: "User disabled successfully!" });
-        if (selectedUser && selectedUser.userid === userId) {
-        setSelectedUser(prev => ({ ...prev, isactive: false }));
-      }
       }
       
-      await fetchUsers();
-      
-      // Delay closing slightly so they see the toast confirmation
-      setTimeout(() => {
+      const updatedList = await fetchUsers();
+      if (selectedUser && getUserId(selectedUser) === userId) {
+        const fresh = updatedList.find(u => getUserId(u) === userId);
+        if (fresh) setSelectedUser(fresh);
+      }
+
+      timerRef.current = setTimeout(() => {
         setModalNotification({ type: '', message: '' });
       }, 3000);
     } catch (err) {
       console.error(`${type} error:`, err);
       setModalNotification({ 
         type: 'error', 
-        message: `Failed to ${type} the user.` 
+        message: err.response?.data?.message || `Failed to ${type} the user.` 
       });
     } finally {
+      setSubmitting(false);
       setConfirmAction({ isOpen: false, type: '', userId: null });
     }
   };
 
-  // Opens the modal with user context
+  const populateEditForm = (targetUser) => {
+    setEditForm({
+      name: targetUser?.name || '',
+      username: targetUser?.username || '',
+      email: targetUser?.email || '',
+      password: '',
+      role_id: targetUser?.role_id !== undefined && targetUser?.role_id !== null ? String(targetUser.role_id) : ''
+    });
+  };
+
   const openUserModal = (targetUser, type = 'view') => {
+    clearNotificationTimer();
     setSelectedUser(targetUser);
-
     if (type === 'add') {
-      setEditForm({
-        name: '',
-        username: '',
-        email: '',
-        password: '',
-        role_id: ''
-      });
+      setEditForm({ name: '', username: '', email: '', password: '', role_id: '' });
     } else {
-      setEditForm({
-        name: targetUser?.name || '',
-        username: targetUser?.username || '',
-        email: targetUser?.email || '',
-        password: '',
-        role_id: targetUser?.role_id || ''
-      });
+      populateEditForm(targetUser);
     }
-
     setModalType(type); 
     setIsModalOpen(true);
   };
 
-  // Closes the modal
+  const handleStartEdit = () => {
+    if (selectedUser) populateEditForm(selectedUser);
+    setModalType('edit');
+  };
+
   const closeUserModal = () => {
+    clearNotificationTimer();
     setSelectedUser(null);
-    setModalType(null);
+    setModalType('view');
     setIsModalOpen(false);
     setModalNotification({ type: '', message: '' });
     setConfirmAction({ isOpen: false, type: '', userId: null });
   };
 
-const handleSaveUser = async () => {
-  // 1. FRONTEND VALIDATION FOR NEW USERS
-  if (!selectedUser) { 
-    if (!editForm.name || !editForm.name.trim()) {
-      setModalNotification({ type: 'error', message: "Please enter a Full Name." });
-      return;
-    }
-    if (!editForm.username || !editForm.username.trim()) {
-      setModalNotification({ type: 'error', message: "Please enter a Username." });
-      return;
-    }
-    if (!editForm.email || !editForm.email.trim()) {
-      setModalNotification({ type: 'error', message: "Please enter an Email Address." });
-      return;
-    }
-    if (!editForm.role_id) {
-      setModalNotification({ type: 'error', message: "Please select a Role." });
-      return;
-    }
-    if (!editForm.password || !editForm.password.trim()) {
-      setModalNotification({ type: 'error', message: "Please enter a Password." });
-      return;
-    }
-  }
-
-  // 2. BACKEND API SYNC LOGIC
-  try {
-    if (selectedUser) {
-      // --- EDITING EXISTING USER ---
-      await instance.put(`/api/auth/users/${selectedUser.userid}`, editForm);
-      setModalNotification({ type: 'success', message: "User details updated successfully!" });
-      
-      await fetchUsers();
-      setTimeout(() => {
-        setModalType('view');
-        setModalNotification({ type: '', message: '' });
-      }, 1000);
-
-    } else {
-      // --- ADDING NEW USER ---
-      const registrationPayload = {
-        name: editForm.name.trim(),
-        username: editForm.username.trim(),
-        email: editForm.email.trim(),
-        password: editForm.password,
-        role_id: Number(editForm.role_id), 
-        isactive: true
-      };
-
-      const response = await instance.post('/api/auth/user-register', registrationPayload);
-      setModalNotification({ type: 'success', message: "New user added successfully!" });
-      
-      // 1. Refresh the main table array
-      const updatedUsers = await instance.get('/api/auth/users');
-      setUsers(updatedUsers.data);
-
-      // 2. Find the newly created user object from the database response or the refreshed list
-      // If your backend returns the saved user object in `response.data.user`, use that.
-      // Otherwise, match it from the freshly pulled list via username/email:
-      const newUser = response.data?.user || updatedUsers.data.find(u => u.username === registrationPayload.username);
-
-      // 3. Immediately transition the modal state into View mode for this new user
-      if (newUser) {
-        setSelectedUser(newUser);
-      } else {
-        // Fallback context if matching fails
-        setSelectedUser({
-          ...registrationPayload,
-          role_name: editForm.role_id == 1 ? 'Admin' : editForm.role_id == 2 ? 'User' : 'View Only'
-        });
-      }
-
-      setModalType('view');
-
-      // Clear out the success banner automatically after 3 seconds
-      setTimeout(() => {
-        setModalNotification({ type: '', message: '' });
-      }, 3000);
-    }
+  const handleSaveUser = async () => {
+    clearNotificationTimer();
     
-  } catch (err) {
-    console.error("Error updating user:", err);
-    const backendError = err.response?.data?.error || `Failed to ${selectedUser ? 'update' : 'add'} user details.`;
-    setModalNotification({ type: 'error', message: backendError });
-  }
-};
+    if (!selectedUser) { 
+      if (!editForm.name.trim()) return setModalNotification({ type: 'error', message: "Please enter a Full Name." });
+      if (!editForm.username.trim()) return setModalNotification({ type: 'error', message: "Please enter a Username." });
+      if (!editForm.email.trim()) return setModalNotification({ type: 'error', message: "Please enter an Email Address." });
+      if (!editForm.role_id) return setModalNotification({ type: 'error', message: "Please select a Role." });
+      if (!editForm.password.trim()) return setModalNotification({ type: 'error', message: "Please enter a Password." });
+    }
 
-  // --- Pagination Data Split ---
+    setSubmitting(true);
+    try {
+      if (selectedUser) {
+        const targetId = getUserId(selectedUser);
+        const matchedRole = roles.find(r => String(r.role_id) === String(editForm.role_id));
+        const updatePayload = {
+          name: editForm.name.trim(),
+          username: editForm.username.trim(),
+          email: editForm.email.trim(),
+          role_id: Number(editForm.role_id),
+          isactive: isUserActive(selectedUser)
+        };
+
+        if (editForm.password && editForm.password.trim() !== '') {
+          updatePayload.password = editForm.password;
+        }
+
+        const response = await instance.put(`/api/auth/users/${targetId}`, updatePayload);
+        const updatedUserObj = response.data?.user || response.data;
+
+        setSelectedUser({
+          ...selectedUser,
+          ...updatePayload,
+          role_name: matchedRole ? matchedRole.role_name : selectedUser.role_name,
+          ...updatedUserObj
+        });
+
+        setModalNotification({ type: 'success', message: "User details updated successfully!" });
+        await fetchUsers();
+        
+        timerRef.current = setTimeout(() => {
+          setModalType('view');
+          setModalNotification({ type: '', message: '' });
+        }, 1200);
+
+      } else {
+        const registrationPayload = {
+          name: editForm.name.trim(),
+          username: editForm.username.trim(),
+          email: editForm.email.trim(),
+          password: editForm.password,
+          role_id: Number(editForm.role_id), 
+          isactive: true
+        };
+
+        const response = await instance.post('/api/auth/user-registration', registrationPayload);
+        setModalNotification({ type: 'success', message: "New user added successfully!" });
+        
+        const updatedUsersList = await fetchUsers();
+        const newUser = response.data?.user || updatedUsersList.find(u => u.username === registrationPayload.username);
+
+        if (newUser) {
+          setSelectedUser(newUser);
+        } else {
+          const selectedRoleObj = roles.find(r => String(r.role_id) === String(editForm.role_id));
+          setSelectedUser({
+            ...registrationPayload,
+            role_name: selectedRoleObj ? selectedRoleObj.role_name : 'User'
+          });
+        }
+
+        setModalType('view');
+        timerRef.current = setTimeout(() => {
+          setModalNotification({ type: '', message: '' });
+        }, 3000);
+      }
+    } catch (err) {
+      console.error("Error updating user:", err);
+      const backendError = err.response?.data?.error || err.response?.data?.message || `Failed to ${selectedUser ? 'update' : 'add'} user details.`;
+      setModalNotification({ type: 'error', message: backendError });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
   const currentRecords = filteredUsers.slice(indexOfFirstRecord, indexOfLastRecord);
   const totalPages = Math.ceil(filteredUsers.length / recordsPerPage);
 
-  if (loading) return <div className="p-10 text-center">Loading user management...</div>;
-  if (error) return <div className="p-10 text-center text-red-500">{error}</div>;
+  if (loading) return <div className="p-10 text-center text-gray-500 font-medium">Loading user management...</div>;
+  if (error) return <div className="p-10 text-center text-red-500 font-medium">{error}</div>;
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
       
-      {/* --- Toolbar --- */}
+      {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-2 flex-1 min-w-[300px]">
           <div className="relative w-full flex-1">
@@ -276,14 +287,14 @@ const handleSaveUser = async () => {
             <input 
               type="text" 
               placeholder="Search Name, Email, Username, Role..." 
-              className="w-full pl-10 pr-4 py-2 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+              className="w-full pl-10 pr-8 py-2 border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             {searchQuery && (
               <button 
                 onClick={() => setSearchQuery("")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-sans text-xs"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-sans text-xs"
               >
                 ✕
               </button>
@@ -296,7 +307,7 @@ const handleSaveUser = async () => {
             <>
               <button 
                 onClick={handleExportExcel}
-                className="flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium hover:bg-gray-50 text-gray-600"
+                className="flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium hover:bg-gray-50 text-gray-600 transition-colors"
               >
                 <Download className="w-4 h-4" /> Export
               </button>
@@ -312,7 +323,7 @@ const handleSaveUser = async () => {
         </div>
       </div>
 
-      {/* --- Table Section --- */}
+      {/* Table Section */}
       <div className="overflow-x-auto border rounded-lg">
         <table className="w-full text-left border-collapse min-w-[800px]">
           <thead>
@@ -326,27 +337,28 @@ const handleSaveUser = async () => {
           </thead>
           <tbody className="text-sm">
             {currentRecords.length > 0 ? (
-              currentRecords.map((u) => (
-                <tr 
-                  key={u.userid} 
-                  onClick={() => openUserModal(u, 'view')}
-                  className="border-b last:border-none hover:bg-gray-100 cursor-pointer transition-colors"
-                >
-                  <td className="p-4">
-                    <span className="font-medium text-gray-900">{u.name}</span>
-                  </td>
-                  <td className="p-4 text-gray-600">{u.email}</td>
-                  <td className="p-4 text-gray-600">{u.username}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      u.isactive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                      {u.isactive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="p-4 text-gray-600">{u.role_name}</td>
-                </tr>
-              ))
+              currentRecords.map((u) => {
+                const active = isUserActive(u);
+                return (
+                  <tr 
+                    key={getUserId(u)} 
+                    onClick={() => openUserModal(u, 'view')}
+                    className="border-b last:border-none hover:bg-gray-100 cursor-pointer transition-colors"
+                  >
+                    <td className="p-4"><span className="font-medium text-gray-900">{u.name}</span></td>
+                    <td className="p-4 text-gray-600">{u.email}</td>
+                    <td className="p-4 text-gray-600">{u.username}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                        {active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="p-4 text-gray-600">{u.role_name}</td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
                 <td colSpan="5" className="p-4 text-center text-gray-500">
@@ -358,7 +370,7 @@ const handleSaveUser = async () => {
         </table>
       </div>
 
-      {/* --- Pagination Info --- */}
+      {/* Pagination Info */}
       <div className="flex flex-wrap items-center justify-between mt-6 gap-4 text-sm text-gray-600">
         <div>
           Showing <span className="font-semibold">{filteredUsers.length === 0 ? 0 : indexOfFirstRecord + 1}</span> to{" "}
@@ -399,7 +411,7 @@ const handleSaveUser = async () => {
         </div>
       </div>
 
-      {/* --- Reusable Modal Frame --- */}
+      {/* Reusable Modal Frame */}
       <Modal 
         isOpen={isModalOpen} 
         onClose={closeUserModal} 
@@ -409,8 +421,6 @@ const handleSaveUser = async () => {
         }
       >
         <div className="space-y-4">
-          
-          {/* Notifications Banner Inside Modal */}
           {modalNotification.message && (
             <div className={`p-3 text-sm rounded border ${
               modalNotification.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'
@@ -433,6 +443,7 @@ const handleSaveUser = async () => {
                 />
               )}
             </div>
+
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Username</label>
               {modalType === 'view' ? (
@@ -446,22 +457,20 @@ const handleSaveUser = async () => {
                 />
               )}
             </div>
+
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Account Status
-              </label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Account Status</label>
               {modalType === 'add' ? (
-                <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                  Active
-                </span>
+                <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Active</span>
               ) : (
                 <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                  selectedUser?.isactive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  isUserActive(selectedUser) ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                 }`}>
-                  {selectedUser?.isactive ? 'Active' : 'Inactive'}
+                  {isUserActive(selectedUser) ? 'Active' : 'Inactive'}
                 </span>
               )}
             </div>
+
             <div className="col-span-2">
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Email Address</label>
               {modalType === 'view' ? (
@@ -475,6 +484,7 @@ const handleSaveUser = async () => {
                 />
               )}
             </div>
+
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</label>
               {modalType === 'view' ? (
@@ -486,12 +496,15 @@ const handleSaveUser = async () => {
                   onChange={(e) => setEditForm({ ...editForm, role_id: e.target.value })}
                 >
                   <option value="" disabled>Select a Role</option>
-                  <option value={1}>Admin</option>
-                  <option value={2}>User</option>
-                  <option value={3}>View Only</option>
+                  {roles.map((role) => (
+                    <option key={role.role_id} value={role.role_id}>
+                      {role.role_name}
+                    </option>
+                  ))}
                 </select>
               )}
             </div>
+
             {modalType === 'add' && (
               <div className="col-span-3">
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Password</label>
@@ -505,9 +518,22 @@ const handleSaveUser = async () => {
                 />
               </div>
             )}
+
+            {modalType === 'edit' && (
+              <div className="col-span-3">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">New Password (Optional)</label>
+                <input 
+                  type="password"
+                  placeholder="Leave blank to keep existing password"
+                  className="mt-1 w-full px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-blue-500 outline-none"
+                  value={editForm.password || ''}
+                  onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                />
+              </div>
+            )}
           </div>
 
-          {/* --- Modal Actions Footer Segment --- */}
+          {/* Modal Footer */}
           {confirmAction.isOpen ? (
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-md my-4 transition-all">
               <p className="text-sm text-amber-800 font-medium">
@@ -515,17 +541,20 @@ const handleSaveUser = async () => {
               </p>
               <div className="mt-3 flex gap-2 justify-end">
                 <button
+                  disabled={submitting}
                   onClick={() => setConfirmAction({ isOpen: false, type: '', userId: null })}
                   className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded hover:bg-white text-gray-700 transition-colors"
                 >
                   No, Cancel
                 </button>
                 <button
+                  disabled={submitting}
                   onClick={executeConfirmAction}
-                  className={`px-3 py-1.5 text-xs font-medium text-white rounded transition-colors ${
+                  className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white rounded transition-colors ${
                     confirmAction.type === 'disable' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
                   }`}
                 >
+                  {submitting && <Loader2 className="w-3 h-3 animate-spin" />}
                   Yes, Proceed
                 </button>
               </div>
@@ -533,17 +562,19 @@ const handleSaveUser = async () => {
           ) : (
             <div className="pt-4 flex justify-between items-center border-t mt-6 gap-2">
               <div>
-                {isAdmin && selectedUser && modalType === 'view' && (
-                  selectedUser?.isactive ? (
+                {isAdmin && selectedUser && (
+                  isUserActive(selectedUser) ? (
                     <button 
-                      onClick={(e) => disableUser(selectedUser.userid, e)}
+                      disabled={submitting}
+                      onClick={(e) => disableUser(getUserId(selectedUser), e)}
                       className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors border border-transparent hover:border-red-200"
                     >
                       <Ban className="w-3.5 h-3.5" /> Disable User
                     </button>
                   ) : ( 
                     <button 
-                      onClick={(e) => enableUser(selectedUser.userid, e)}
+                      disabled={submitting}
+                      onClick={(e) => enableUser(getUserId(selectedUser), e)}
                       className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-green-600 hover:bg-green-50 rounded-md transition-colors border border-transparent hover:border-green-200"
                     >
                       <Check className="w-3.5 h-3.5" /> Enable User
@@ -562,7 +593,7 @@ const handleSaveUser = async () => {
                     </button>
                     {!isViewOnly && (
                       <button 
-                        onClick={() => setModalType('edit')}
+                        onClick={handleStartEdit}
                         className="flex items-center gap-2 px-4 py-2 bg-[#2D3E50] text-white rounded-md text-sm font-medium hover:bg-slate-700 transition-colors"
                       >
                         Edit Profile
@@ -572,6 +603,7 @@ const handleSaveUser = async () => {
                 ) : (
                   <>
                     <button 
+                      disabled={submitting}
                       onClick={() => {
                         if (modalType === 'add') {
                           closeUserModal(); 
@@ -585,9 +617,11 @@ const handleSaveUser = async () => {
                       Cancel
                     </button>
                     <button 
+                      disabled={submitting}
                       onClick={handleSaveUser}
-                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors"
+                      className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors disabled:opacity-50"
                     >
+                      {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                       {modalType === 'add' ? 'Register User' : 'Save Changes'}
                     </button>
                   </>
@@ -595,10 +629,8 @@ const handleSaveUser = async () => {
               </div>
             </div>
           )}
-          
         </div>
       </Modal>
-
     </div>
   );
 }

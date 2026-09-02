@@ -1,204 +1,155 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, KeyRound } from 'lucide-react';
-import {SidebarData} from "./SidebarData";
+// src/components/navigation/Sidebar.jsx
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { SidebarData } from './SidebarData';
 import styles from "./Sidebar.module.css";
 import LogoImg from "../../assets/img/YessLogo.png";
-import { toast } from 'sonner';
+import { ChangePasswordModal } from '../navigation/ChangePasswordModal';
+import instance from '../../api';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import api from '@/api';
-import instance from '@/api';
+// Optional: Import a Key icon from lucide-react or react-icons
+import { Key } from 'lucide-react'; 
 
-function Sidebar({ user }) {
+export default function Sidebar({ user, onLogout }) {
+  const location = useLocation();
   const navigate = useNavigate();
-  const [subnav, setSubnav] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  });
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-  const showSubnav = () => setSubnav(!subnav);
+  // Normalize role string and ID
+  const roleStr = String(user?.role || user?.role_name || '').toLowerCase();
+  const roleId = String(user?.role_id || '');
 
-  //   try {
-  //     const response = await api.post('/api/auth/logout');
+  const isAdmin = roleStr === 'admin' || roleId === '1';
+  const isFieldManager = roleStr === 'field manager' || roleId === '2';
 
-  //     if (response.status === 200) {
-  //       navigate('/login'); // Redirect to login page
-  //     }
-  //   } catch (error) {
-  //     console.error("Logout failed:", error);
-  //   }
-  // };
+  // Get user display name (fallback to 'User')
+  const userName = user?.name || user?.username || 'Admin Qin';
 
   const handleLogout = async () => {
     try {
-        await instance.post('/api/auth/logout');
-    } catch (err) {
-        console.error("Logout request failed", err);
+      const refreshToken = localStorage.getItem('refreshToken');
+      await instance.post('/api/auth/logout', { refreshToken });
+    } catch (error) {
+      console.error('Logout error:', error);
     } finally {
-        // ALWAYS clear the token from storage on logout
-        localStorage.removeItem('token');
-  
-        navigate('/login'); 
-        // then clear your global user state and redirect...
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('refreshToken');
+
+      if (typeof onLogout === 'function') {
+        onLogout();
+      }
+
+      navigate('/login', { replace: true });
     }
-};
+  };
 
-const handlePasswordReset = async (e) => {
-  e.preventDefault();
-  
-  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-    return toast.error("New passwords do not match.");
-  }
+  // Open the change password modal
+  const handleChangePassword = () => {
+    setIsPasswordModalOpen(true);
+  };
 
-  setIsUpdating(true);
-  try {
-    // Swap fetch for your configured Axios instance
-    const response = await api.put('/api/auth/change-password', {
-      currentPassword: passwordForm.currentPassword,
-      newPassword: passwordForm.newPassword,
-    });
-
-    // Axios puts data directly on response.data
-    toast.success("Password updated successfully!");
-    setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    setIsModalOpen(false); 
-  } catch (err) {
-    console.error(err);
-    // Axios errors place the server response inside err.response
-    const errorMsg = err.response?.data?.error || "Could not connect to the server.";
-    toast.error(errorMsg);
-  } finally {
-    setIsUpdating(false);
-  }
-};
+  // Handle password submit request via backend API
+  const handlePasswordSubmit = async (currentPassword, newPassword) => {
+    try {
+      const response = await instance.post('/api/auth/change-password', {
+        currentPassword,
+        newPassword,
+      });
+      return response.data;
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to update password.';
+      throw new Error(message);
+    }
+  };
 
   return (
-    <div className={styles.sidebar}>
-      {/* --- New Logo Section --- */}
-      <div className={styles.logoContainer}>
-         {/* If using an image file: */}
-         <img src={LogoImg} alt="Company Logo" className={styles.logo} />
+    <>
+      <aside className="w-[250px] max-md:w-[60px] fixed left-0 top-0 h-full bg-[#1e293b] text-white transition-all duration-300 flex flex-col justify-between z-40">
+        {/* Top Section: Logo & Nav Links */}
+        <div className="flex-1 flex flex-col overflow-y-auto">
+          <div className="p-4 border-b border-slate-700/50">
+            <img src={LogoImg} alt="Company Logo" className={styles.logo}/>
+          </div>
 
-      </div>
-      <ul className={styles.sidebarList}>
-        {SidebarData.map((val,key) =>{
-          // --- HIDE USER MANAGEMENT IF ROLE IS VIEW ONLY ---
-          if (val.title === "User Management" && user?.role_name === 'View Only') {
-            return null; // Skip rendering this item
-          }
-      return(
-       <React.Fragment key={key}>
-              <li
-                className={styles.row}
-                onClick={() => {
-                  if (val.title === "Logout") {
-                    handleLogout();
-                  } else if (val.subNav) {
-                    showSubnav(); // Toggle dropdown
-                  } else {
-                    navigate(val.link);
-                  }
-                }}
-              >
-                <div className={styles.icon}>{val.icon}</div>
-                <div className={styles.title}>{val.title}</div>
-                
-                {/* Show arrow icon if subnav exists */}
-                {val.subNav && (
-                  <div className={styles.arrow}>
-                    {subnav ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                  </div>
-                )}
-              </li>
+          <nav className="p-2 space-y-1">
+            {SidebarData.map((item) => {
+              // Always show Logout button
+              if (item.link === '/logout') {
+                return (
+                  <button
+                    key={item.title || 'logout'}
+                    type="button"
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-red-600/10 hover:text-red-400 transition-colors cursor-pointer"
+                  >
+                    {item.icon}
+                    <span className="max-md:hidden">{item.title}</span>
+                  </button>
+                );
+              }
 
-              {/* Render Sub-items if menu is open and subNav exists */}
-              {val.subNav && subnav && (
-                <ul className={styles.subList}>
-                  {val.subNav.map((subItem, index) => (
-                    <li
-                      key={index}
-                      className={styles.subRow}
-                      onClick={() => navigate(subItem.link)}
-                    >
-                      <div className={styles.title}>{subItem.title}</div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </React.Fragment>
-      )
-    })}
-    </ul>
-      <div className={styles.sidebarFooter}>
-        <div className={styles.footerLabel}>Logged in as:</div>
-        <div className={styles.footerUser}>{user?.name || "AAA"}</div>
-      {/* --- SELF PASSWORD RESET INLINE MODAL TRIGGER --- */}
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogTrigger asChild>
-            <button className={styles.passwordResetBtn}>
-              <KeyRound size={13} />
-              Change Password
-            </button>
-          </DialogTrigger>
-          
-          <DialogContent className="sm:max-w-[400px]">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-bold tracking-tight">Change Password</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handlePasswordReset} className="space-y-4 pt-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="currentPassword">Current Password</Label>
-                <Input
-                  id="currentPassword"
-                  type="password"
-                  required
-                  value={passwordForm.currentPassword}
-                  onChange={(e) => setPasswordForm({...passwordForm, currentPassword: e.target.value})}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="newPassword">New Password</Label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  required
-                  value={passwordForm.newPassword}
-                  onChange={(e) => setPasswordForm({...passwordForm, newPassword: e.target.value})}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  required
-                  value={passwordForm.confirmPassword}
-                  onChange={(e) => setPasswordForm({...passwordForm, confirmPassword: e.target.value})}
-                />
-              </div>
-              <Button type="submit" disabled={isUpdating} className="w-full mt-2">
-                {isUpdating ? "Updating..." : "Update Password"}
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </div>
-  )
+              // Filter logic
+              if (!isAdmin) {
+                if (isFieldManager) {
+                  const allowedLinks = ['/tasks', '/task', '/request-list', '/master-list', '/masterlist'];
+                  const itemLinkLower = (item.link || '').toLowerCase();
+                  
+                  const isAllowed = allowedLinks.some((path) =>
+                    itemLinkLower.startsWith(path)
+                  );
+                  
+                  if (!isAllowed) return null;
+                } else {
+                  return null;
+                }
+              }
+
+              const isActive = location.pathname.toLowerCase() === item.link?.toLowerCase();
+
+              return (
+                <Link
+                  key={item.link}
+                  to={item.link}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-blue-600 text-white'
+                      : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+                  }`}
+                >
+                  {item.icon}
+                  <span className="max-md:hidden">{item.title}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Bottom Section: Logged In User & Change Password */}
+        <div className="p-4 bg-[#182232] border-t border-slate-700/50 flex flex-col gap-2">
+          <div className="max-md:hidden flex flex-col">
+            <span className="text-xs text-slate-400">Logged in as:</span>
+            <span className="text-sm font-semibold text-white truncate">{userName}</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleChangePassword}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-slate-300 border border-slate-600 hover:border-slate-500 rounded-lg hover:bg-slate-700/50 hover:text-white transition-all max-md:p-2 cursor-pointer"
+            title="Change Password"
+          >
+            <Key className="w-3.5 h-3.5" />
+            <span className="max-md:hidden">Change Password</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Modal Component */}
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onSubmit={handlePasswordSubmit}
+      />
+    </>
+  );
 }
-
-export default Sidebar

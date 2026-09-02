@@ -118,7 +118,6 @@ const Dashboard = () => {
     const fetchMissingInvoices = async () => {
       try {
         const res = await instance.get('/api/auth/missing-invoices');
-        console.log("WHAT THE BACKEND SENT:", res.data); 
         if (res.data) {
           setMissingInvoices(res.data);
         }
