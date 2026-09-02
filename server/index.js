@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
 import cors from "cors";
-import authRoutes from './routes/auth.js'; // Ensure the .js extension is here
+import authRoutes from './routes/authRoutes.js'; // Ensure the .js extension is here
 import cookieParser from 'cookie-parser';
 import qboRoutes from './routes/qbo.js';
 //import masterlistRouter from './routes/masterlist.js';
@@ -10,6 +10,7 @@ import qboRoutes from './routes/qbo.js';
 
 const app = express();
 
+app.disable('etag');
 // ADD THIS LINE RIGHT HERE
 app.set('trust proxy', 1);
 
