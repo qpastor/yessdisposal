@@ -272,7 +272,7 @@ export default function Masterlist({ user = {} }) {
   const formatDate = (dateString) => {
     if (!dateString) return <span className="text-gray-400">N/A</span>;
     return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'long',
+      month: 'short',
       day: 'numeric',
       year: 'numeric',
       timeZone: 'UTC'
@@ -390,7 +390,6 @@ export default function Masterlist({ user = {} }) {
     );
   });
 
-  // FIXED ORDER GROUPING LOGIC
   const orderedGroupedTasks = useMemo(() => {
     const rawGroups = filteredTasks.reduce((acc, task) => {
       const statusName = task.status_name || 'Unassigned';
@@ -401,7 +400,6 @@ export default function Masterlist({ user = {} }) {
 
     const ordered = [];
 
-    // 1. Map over master status list to preserve exact category order
     statuses.forEach((statusObj) => {
       const name = statusObj.status_name;
       if (rawGroups[name] && rawGroups[name].length > 0) {
@@ -410,7 +408,6 @@ export default function Masterlist({ user = {} }) {
       }
     });
 
-    // 2. Catch any leftover statuses (e.g. Unassigned)
     Object.entries(rawGroups).forEach(([name, tasksList]) => {
       if (tasksList.length > 0) {
         ordered.push([name, tasksList]);
@@ -687,49 +684,50 @@ export default function Masterlist({ user = {} }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse table-fixed min-w-[1200px]">
-          <thead>
-            <tr className="bg-[#2D3E50] text-white text-sm font-medium tracking-wide select-none">
-              <th className="p-3 font-semibold w-[120px]">Status</th>
-              <th className="p-3 font-semibold w-[130px]">Schedule Date</th>
-              <th className="p-3 font-semibold w-[220px]">Job Site *</th>
-              <th className="p-3 font-semibold w-[150px]">Customer</th>
-              <th className="p-3 font-semibold w-[80px]">Loads *</th>
-              <th className="p-3 font-semibold w-[130px]">Material *</th>
-              <th className="p-3 font-semibold w-[130px]">Trucker *</th>
-              <th className="p-3 font-semibold w-[150px]">Dump Facility *</th>
-              <th className="p-3 font-semibold w-[120px]">Yess Invoice</th>
-              <th className="p-3 font-semibold w-[180px]">Notes</th>
-              <th className="p-3 font-semibold text-center w-[90px] rounded-tr-xl">Actions</th>
+      {/* Scrollable Container for Sticky Header without Horizontal Scroll */}
+      <div className="max-h-[calc(100vh-220px)] overflow-y-auto border rounded-lg border-gray-200">
+        <table className="w-full text-left border-collapse table-fixed">
+          <thead className="sticky top-0 z-10 bg-[#2D3E50] text-white text-xs font-medium tracking-wide select-none shadow">
+            <tr>
+              <th className="p-2.5 font-semibold w-[9%]">Status</th>
+              <th className="p-2.5 font-semibold w-[10%]">Date</th>
+              <th className="p-2.5 font-semibold w-[16%]">Job Site *</th>
+              <th className="p-2.5 font-semibold w-[11%]">Customer</th>
+              <th className="p-2.5 font-semibold w-[5%] text-center">Loads*</th>
+              <th className="p-2.5 font-semibold w-[10%]">Material *</th>
+              <th className="p-2.5 font-semibold w-[10%]">Trucker *</th>
+              <th className="p-2.5 font-semibold w-[11%]">Dump Facility *</th>
+              <th className="p-2.5 font-semibold w-[8%]">Invoice</th>
+              <th className="p-2.5 font-semibold w-[10%]">Notes</th>
+              <th className="p-2.5 font-semibold text-center w-[10%]">Actions</th>
             </tr>
           </thead>
-          <tbody className="text-gray-600 text-sm divide-y divide-gray-100">
+          <tbody className="text-gray-600 text-xs divide-y divide-gray-100">
             {isAddingRow && (
               <tr className="bg-blue-50/60 border-b-2 border-blue-200 align-top">
-                <td className="p-2">
+                <td className="p-1.5">
                   <select 
                     name="status_id" 
                     value={newRowData.status_id} 
                     onChange={handleInlineInputChange}
-                    className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded px-1.5 py-1 text-xs bg-white outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     {statuses.map(s => <option key={s.status_id} value={s.status_id}>{s.status_name}</option>)}
                   </select>
                 </td>
-                <td className="p-2">
+                <td className="p-1.5">
                   <input 
                     type="date" 
                     name="schedule_date" 
                     value={newRowData.schedule_date} 
                     onChange={handleInlineInputChange}
-                    className={`w-full border rounded px-2 py-1 text-xs outline-none focus:ring-1 ${
+                    className={`w-full border rounded px-1.5 py-1 text-xs outline-none focus:ring-1 ${
                       inlineErrors.schedule_date ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-blue-500'
                     }`}
                   />
                   {inlineErrors.schedule_date && <span className="text-[10px] text-red-500 block mt-0.5">{inlineErrors.schedule_date}</span>}
                 </td>
-                <td className="p-2">
+                <td className="p-1.5">
                   <JobSitePhotonInput 
                     value={newJobSiteText}
                     onChange={(val) => {
@@ -739,22 +737,22 @@ export default function Masterlist({ user = {} }) {
                       }
                     }}
                     hasError={Boolean(inlineErrors.job_site_id)}
-                    placeholder="Type job site..."
+                    placeholder="Job site..."
                   />
                   {inlineErrors.job_site_id && <span className="text-[10px] text-red-500 block mt-0.5">{inlineErrors.job_site_id}</span>}
                 </td>
-                <td className="p-2">
+                <td className="p-1.5">
                   <select 
                     name="customer_id" 
                     value={newRowData.customer_id} 
                     onChange={handleInlineInputChange}
-                    className="w-full border border-gray-300 rounded px-2 py-1 text-xs bg-white outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded px-1.5 py-1 text-xs bg-white outline-none focus:ring-1 focus:ring-blue-500"
                   >
                     <option value="" disabled hidden>Customer</option>
                     {customerList.map(c => <option key={c.customer_id} value={c.customer_id}>{c.customer_name}</option>)}
                   </select>
                 </td>
-                <td className="p-2">
+                <td className="p-1.5">
                   <input 
                     type="number" 
                     name="loads" 
@@ -762,18 +760,18 @@ export default function Masterlist({ user = {} }) {
                     min="0" 
                     value={newRowData.loads} 
                     onChange={handleInlineInputChange}
-                    className={`w-full border rounded px-2 py-1 text-xs outline-none focus:ring-1 ${
+                    className={`w-full border rounded px-1.5 py-1 text-xs outline-none focus:ring-1 ${
                       inlineErrors.loads ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-blue-500'
                     }`}
                   />
                   {inlineErrors.loads && <span className="text-[10px] text-red-500 block mt-0.5">{inlineErrors.loads}</span>}
                 </td>
-                <td className="p-2">
+                <td className="p-1.5">
                   <select 
                     name="material_id" 
                     value={newRowData.material_id} 
                     onChange={handleInlineInputChange}
-                    className={`w-full border rounded px-2 py-1 text-xs bg-white outline-none focus:ring-1 ${
+                    className={`w-full border rounded px-1.5 py-1 text-xs bg-white outline-none focus:ring-1 ${
                       inlineErrors.material_id ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-blue-500'
                     }`}
                   >
@@ -782,12 +780,12 @@ export default function Masterlist({ user = {} }) {
                   </select>
                   {inlineErrors.material_id && <span className="text-[10px] text-red-500 block mt-0.5">{inlineErrors.material_id}</span>}
                 </td>
-                <td className="p-2">
+                <td className="p-1.5">
                   <select 
                     name="trucker_id" 
                     value={newRowData.trucker_id} 
                     onChange={handleInlineInputChange}
-                    className={`w-full border rounded px-2 py-1 text-xs bg-white outline-none focus:ring-1 ${
+                    className={`w-full border rounded px-1.5 py-1 text-xs bg-white outline-none focus:ring-1 ${
                       inlineErrors.trucker_id ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-blue-500'
                     }`}
                   >
@@ -796,12 +794,12 @@ export default function Masterlist({ user = {} }) {
                   </select>
                   {inlineErrors.trucker_id && <span className="text-[10px] text-red-500 block mt-0.5">{inlineErrors.trucker_id}</span>}
                 </td>
-                <td className="p-2">
+                <td className="p-1.5">
                   <select 
                     name="dump_facility_id" 
                     value={newRowData.dump_facility_id} 
                     onChange={handleInlineInputChange}
-                    className={`w-full border rounded px-2 py-1 text-xs bg-white outline-none focus:ring-1 ${
+                    className={`w-full border rounded px-1.5 py-1 text-xs bg-white outline-none focus:ring-1 ${
                       inlineErrors.dump_facility_id ? 'border-red-500 focus:ring-red-500 bg-red-50' : 'border-gray-300 focus:ring-blue-500'
                     }`}
                   >
@@ -810,45 +808,45 @@ export default function Masterlist({ user = {} }) {
                   </select>
                   {inlineErrors.dump_facility_id && <span className="text-[10px] text-red-500 block mt-0.5">{inlineErrors.dump_facility_id}</span>}
                 </td>
-                <td className="p-2">
+                <td className="p-1.5">
                   <input 
                     type="text" 
                     name="invoice" 
                     placeholder="Invoice" 
                     value={newRowData.invoice} 
                     onChange={handleInlineInputChange}
-                    className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded px-1.5 py-1 text-xs outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </td>
-                <td className="p-2">
+                <td className="p-1.5">
                   <input 
                     type="text" 
                     name="remarks" 
                     placeholder="Notes" 
                     value={newRowData.remarks} 
                     onChange={handleInlineInputChange}
-                    className="w-full border border-gray-300 rounded px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded px-1.5 py-1 text-xs outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </td>
-                <td className="p-2">
+                <td className="p-1.5">
                   <div className="flex items-center justify-center gap-1">
                     <button 
                       onClick={handleSaveNewTask} 
                       disabled={savingNewRow}
-                      className="p-1.5 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-colors"
+                      className="p-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-colors"
                       title="Save Task"
                     >
-                      <Check className="w-4 h-4" />
+                      <Check className="w-3.5 h-3.5" />
                     </button>
                     <button 
                       onClick={() => {
                         setIsAddingRow(false);
                         setInlineErrors({});
                       }} 
-                      className="p-1.5 bg-gray-400 text-white rounded hover:bg-gray-500 transition-colors"
+                      className="p-1 bg-gray-400 text-white rounded hover:bg-gray-500 transition-colors"
                       title="Cancel"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </td>
@@ -866,16 +864,16 @@ export default function Masterlist({ user = {} }) {
 
                 return (
                   <React.Fragment key={statusName}>
-                    <tr className="bg-slate-100/80 border-t-2 border-b border-slate-200 select-none">
-                      <td colSpan="11" className="py-2.5 px-4 font-semibold text-slate-800 text-xs">
+                    <tr className="bg-slate-100/90 border-t border-b border-slate-200 select-none">
+                      <td colSpan="11" className="py-2 px-3 font-semibold text-slate-800 text-xs">
                         <div className="flex items-center justify-between">
                           <button
                             onClick={() => toggleStatusCollapse(statusName)}
                             className="flex items-center gap-2 hover:text-blue-600 transition-colors focus:outline-none"
                           >
                             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                            <span>Status category: <strong className="text-slate-900">{statusName}</strong></span>
-                            <span className="ml-1 px-2 py-0.5 rounded-full text-[11px] bg-slate-200 text-slate-700 font-semibold">
+                            <span>Status: <strong className="text-slate-900">{statusName}</strong></span>
+                            <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] bg-slate-200 text-slate-700 font-semibold">
                               {statusTasks.length} {statusTasks.length === 1 ? 'item' : 'items'}
                             </span>
                           </button>
@@ -883,23 +881,23 @@ export default function Masterlist({ user = {} }) {
                           {!collapsed && totalStatusPages > 1 && (
                             <div className="flex items-center gap-2 font-normal text-slate-600">
                               <span className="text-[11px]">
-                                Showing {startIdx + 1}–{Math.min(startIdx + RECORDS_PER_STATUS_PAGE, statusTasks.length)} of {statusTasks.length}
+                                {startIdx + 1}–{Math.min(startIdx + RECORDS_PER_STATUS_PAGE, statusTasks.length)} of {statusTasks.length}
                               </span>
                               <div className="flex items-center gap-1 ml-2">
                                 <button
                                   disabled={currentPage === 1}
                                   onClick={() => setStatusPage(statusName, currentPage - 1)}
-                                  className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                                  className="p-0.5 rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                   <ChevronLeft className="w-3.5 h-3.5" />
                                 </button>
                                 <span className="text-[11px] font-medium px-1">
-                                  Page {currentPage} of {totalStatusPages}
+                                  {currentPage}/{totalStatusPages}
                                 </span>
                                 <button
                                   disabled={currentPage === totalStatusPages}
                                   onClick={() => setStatusPage(statusName, currentPage + 1)}
-                                  className="p-1 rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                                  className="p-0.5 rounded border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                   <ChevronRight className="w-3.5 h-3.5" />
                                 </button>
@@ -916,19 +914,19 @@ export default function Masterlist({ user = {} }) {
                         onClick={() => viewTask(task.task_id)}
                         className="border-b hover:bg-slate-50 cursor-pointer transition-colors"
                       >
-                        <td className="p-3 font-medium truncate">{task.status_name}</td>
-                        <td className="p-3 font-semibold text-gray-800 truncate">
+                        <td className="p-2.5 font-medium truncate" title={task.status_name}>{task.status_name}</td>
+                        <td className="p-2.5 font-semibold text-gray-800 truncate">
                           {formatDate(task.schedule_date)}
                         </td>
-                        <td className="p-3 text-gray-700 truncate" title={task.job_site_name}>{task.job_site_name}</td>
-                        <td className="p-3 text-gray-700 truncate" title={task.customer_name}>{task.customer_name}</td>
-                        <td className="p-3 text-gray-700 truncate">{task.loads}</td>
-                        <td className="p-3 text-gray-700 truncate" title={task.material_name}>{task.material_name}</td>
-                        <td className="p-3 text-gray-700 truncate" title={task.trucker_name}>{task.trucker_name}</td>
-                        <td className="p-3 text-gray-700 truncate" title={task.dump_facility_name}>{task.dump_facility_name}</td>
-                        <td className="p-3 text-gray-700 truncate">{task.invoice || <span className="text-slate-500 italic">No Invoice</span>}</td>
-                        <td className="p-3 text-gray-700 truncate" title={task.remarks}>{task.remarks || <span className="text-slate-500 italic">N/A</span>}</td>
-                        <td className="p-3 text-center text-gray-400">--</td>
+                        <td className="p-2.5 text-gray-700 truncate" title={task.job_site_name}>{task.job_site_name}</td>
+                        <td className="p-2.5 text-gray-700 truncate" title={task.customer_name}>{task.customer_name}</td>
+                        <td className="p-2.5 text-gray-700 truncate text-center">{task.loads}</td>
+                        <td className="p-2.5 text-gray-700 truncate" title={task.material_name}>{task.material_name}</td>
+                        <td className="p-2.5 text-gray-700 truncate" title={task.trucker_name}>{task.trucker_name}</td>
+                        <td className="p-2.5 text-gray-700 truncate" title={task.dump_facility_name}>{task.dump_facility_name}</td>
+                        <td className="p-2.5 text-gray-700 truncate">{task.invoice || <span className="text-slate-400 italic">None</span>}</td>
+                        <td className="p-2.5 text-gray-700 truncate" title={task.remarks}>{task.remarks || <span className="text-slate-400 italic">N/A</span>}</td>
+                        <td className="p-2.5 text-center text-gray-400">--</td>
                       </tr>
                     ))}
                   </React.Fragment>
@@ -1198,16 +1196,14 @@ export default function Masterlist({ user = {} }) {
               <button 
                 type="button" 
                 onClick={closeModal} 
-                className="px-4 py-2 border rounded-md text-sm hover:bg-gray-50 text-gray-600"
-              >
+                className="px-4 py-2 border rounded-md text-sm hover:bg-gray-50 text-gray-600">
                 Close
               </button>
               {canEditTask && (
                 <button 
                   type="button" 
                   onClick={handleSwitchToEditMode} 
-                  className="px-4 py-2 bg-[#2D3E50] text-white rounded-md text-sm font-medium hover:bg-slate-700"
-                >
+                  className="px-4 py-2 bg-[#2D3E50] text-white rounded-md text-sm font-medium hover:bg-slate-700">
                   Edit Task
                 </button>
               )}
