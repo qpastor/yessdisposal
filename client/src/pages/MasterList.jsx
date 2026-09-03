@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, Download, UserPlus, ChevronLeft, ChevronRight, Check, X, ChevronDown } from 'lucide-react';
 import instance from '../api'; 
 import Modal from '../components/ui/Modal'; 
@@ -390,12 +390,35 @@ export default function Masterlist({ user = {} }) {
     );
   });
 
-  const groupedTasks = filteredTasks.reduce((acc, task) => {
-    const statusName = task.status_name || 'Unassigned';
-    if (!acc[statusName]) acc[statusName] = [];
-    acc[statusName].push(task);
-    return acc;
-  }, {});
+  // FIXED ORDER GROUPING LOGIC
+  const orderedGroupedTasks = useMemo(() => {
+    const rawGroups = filteredTasks.reduce((acc, task) => {
+      const statusName = task.status_name || 'Unassigned';
+      if (!acc[statusName]) acc[statusName] = [];
+      acc[statusName].push(task);
+      return acc;
+    }, {});
+
+    const ordered = [];
+
+    // 1. Map over master status list to preserve exact category order
+    statuses.forEach((statusObj) => {
+      const name = statusObj.status_name;
+      if (rawGroups[name] && rawGroups[name].length > 0) {
+        ordered.push([name, rawGroups[name]]);
+        delete rawGroups[name];
+      }
+    });
+
+    // 2. Catch any leftover statuses (e.g. Unassigned)
+    Object.entries(rawGroups).forEach(([name, tasksList]) => {
+      if (tasksList.length > 0) {
+        ordered.push([name, tasksList]);
+      }
+    });
+
+    return ordered;
+  }, [filteredTasks, statuses]);
 
   const getStatusPage = (statusName) => statusState[statusName]?.currentPage || 1;
   const isStatusCollapsed = (statusName) => Boolean(statusState[statusName]?.collapsed);
@@ -665,7 +688,6 @@ export default function Masterlist({ user = {} }) {
       </div>
 
       <div className="overflow-x-auto">
-        {/* table-fixed forces the browser to honor column widths regardless of cell content */}
         <table className="w-full text-left border-collapse table-fixed min-w-[1200px]">
           <thead>
             <tr className="bg-[#2D3E50] text-white text-sm font-medium tracking-wide select-none">
@@ -833,8 +855,8 @@ export default function Masterlist({ user = {} }) {
               </tr>
             )}
 
-            {Object.keys(groupedTasks).length > 0 ? (
-              Object.entries(groupedTasks).map(([statusName, statusTasks]) => {
+            {orderedGroupedTasks.length > 0 ? (
+              orderedGroupedTasks.map(([statusName, statusTasks]) => {
                 const currentPage = getStatusPage(statusName);
                 const collapsed = isStatusCollapsed(statusName);
                 const totalStatusPages = Math.ceil(statusTasks.length / RECORDS_PER_STATUS_PAGE);
